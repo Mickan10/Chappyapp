@@ -1,0 +1,203 @@
+
+/*  */
+body {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  background: linear-gradient(180deg, #334041, #313C3D, #293031);
+  color: white;
+}
+
+.chat-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.sloggan {
+  font-size: 13px;
+  margin-left: 45px;
+  color: #767f80;
+}
+
+.chat-layout {
+  display: flex;
+  flex: 1;
+}
+
+/* header */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(180deg, #334041, #313C3D, #293031);
+  padding: 10px 20px;
+  color: #d4d4d4;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.topbar-logo {
+  width: 60px;
+  height: 65px;
+}
+
+.topbar-right button {
+  background: none;
+  border: none;
+  padding: 5px 32px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.topbar-right .btn-user 
+{ background-color: #92a596c1 !important;
+  color: rgb(231, 228, 228);
+  margin-right: 10px;
+}
+
+.topbar-right .btn-logout 
+{ background-color: #343231 !important;
+  color: rgb(231, 228, 228);
+}
+
+/* kanaler/meddelanden */
+.sidebar {
+  width: 200px;
+  background: linear-gradient(180deg, #415153, #435051, #282d2e);
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sidebar h3 {
+  font-size: 24px;
+  margin-bottom: 10px;
+  color: #f3efef;
+  border-bottom: 1px solid #d6d0d0;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar li {
+  padding: 6px 0;
+  cursor: pointer;
+}
+
+.sidebar li.active {
+  font-weight: bold;
+  color: white;
+}
+
+.sidebar li:hover {
+  color: #99957c;
+}
+
+/* chatten */
+.chat-window {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #334041, #313C3D, #293031);
+  padding: 10px;
+}
+
+.chat-header {
+  padding-bottom: 10px;
+  border-bottom: 1px solid #d6d0d0;
+}
+
+/* Meddelanden */
+.chat-messages {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Grupp: avsändare + meddelande */
+.message-group {
+  display: flex;
+  flex-direction: column;
+  max-width: 70%;
+}
+
+/* TODO */
+/* Namnet över bubblan */
+.sender-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #d9d9d9;
+}
+
+/* Bubblorna */
+.message-bubble {
+  padding: 8px 12px;
+  border-radius: 10px;
+  word-wrap: break-word;
+}
+
+/* meddelanden (vänster) */
+.received {
+  align-self: flex-start;
+}
+
+.received .message-bubble {
+  background-color: #99957c !important;
+  color: #2f2f2f;
+  border-top-left-radius: 0;
+}
+
+/* meddelanden (höger) */
+.sent {
+  align-self: flex-end;
+  text-align: right;
+}
+
+.sent .sender-name {
+  align-self: flex-end;
+}
+
+.sent .message-bubble {
+  background-color: #d9d9d9;
+  color: #2f2f2f;
+  border-top-right-radius: 0;
+}
+
+
+/* Input */
+.chat-input {
+  display: flex;
+  padding-top: 10px;
+  border-top: 1px solid #dcd8d8;
+}
+
+.chat-input input {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  background-color: #f3f1f1;
+  color: rgb(0, 0, 0);
+}
+
+.chat-input button {
+  background-color: #92a596b3;
+  color: white;
+  border: none;
+  margin-left: 6px;
+  border-radius: 6px;
+  padding: 10px 16px;
+  cursor: pointer;
+}
