@@ -2,7 +2,8 @@ import express from "express";
 import { db, myTable } from "../data/db.js";
 import { PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { v4 as uuidv4 } from "uuid";
-import { createToken } from "../auth/jwt.js";
+import { createToken, verifyToken } from "../auth/jwt.js";
+import bcrypt from "bcrypt";
 
 const router = express.Router();
 
@@ -28,6 +29,9 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ success: false, error: "User already exists." });
     }
 
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
     // skapar ett unikt user#id
     const userId = uuidv4();
 
@@ -39,7 +43,7 @@ router.post("/register", async (req, res) => {
           SK: "META",
           email,
           name,
-          password,
+          password: hashedPassword, //lösen blir hashade
         },
       })
     );
@@ -75,8 +79,11 @@ router.post("/login", async (req, res) => {
 
     const user = result.Items[0];
 
-    if (user.password !== password) {
-      return res.status(401).json({ success: false, error: "Invalid password." });
+   const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Invalid password." });
     }
 
     // skapa JWT
@@ -86,11 +93,45 @@ router.post("/login", async (req, res) => {
       name: user.name,
     });
 
-    res.json({ success: true, token, name: user.name });
+    res.json({ success: true, token, name: user.name, userId: user.PK });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ success: false, error: "Server error during login." });
   }
 });
+
+router.get("/all", async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "No token provided" });
+  }
+
+  const token = authHeader.split(" ")[1];
+  const decoded = verifyToken(token);
+  if (!decoded || typeof decoded === "string") {
+    return res.status(403).json({ error: "Invalid or expired token" });
+  }
+
+  try {
+    const result = await db.send(
+      new ScanCommand({
+        TableName: myTable,
+        FilterExpression: "SK = :meta AND PK <> :pk",
+        ExpressionAttributeValues: {
+          ":meta": "META",
+          ":pk": decoded.userId,
+        },
+        ProjectionExpression: "PK, #n, email",
+        ExpressionAttributeNames: { "#n": "name" }, 
+      })
+    );
+
+    res.json(result.Items || []);
+  } catch (err) {
+    console.error("Error fetching users:", err);
+    res.status(500).json({ error: "Failed to load users" });
+  }
+});
+
 
 export default router;

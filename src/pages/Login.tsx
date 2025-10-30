@@ -9,11 +9,13 @@ export default function Login() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  // för style css
   useEffect(() => {
     document.body.classList.add("login-page");
     return () => document.body.classList.remove("login-page");
   }, []);
 
+  //Hantera inloggning
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -32,8 +34,11 @@ export default function Login() {
         return;
       }
 
-      // Spara JWT-token i localStorage
       localStorage.setItem("token", data.token);
+      localStorage.setItem("userName", data.name);
+      localStorage.setItem("userId", data.userId);
+
+      // Navigera till chatten
       navigate("/chat");
     } catch (err) {
       console.error("Login error:", err);
@@ -44,6 +49,7 @@ export default function Login() {
   return (
     <div className="login-container">
       <img src={chappyLogo} alt="Chappy logo" className="logo" />
+
       <form className="login-form" onSubmit={handleLogin}>
         <input
           type="email"
@@ -64,6 +70,7 @@ export default function Login() {
           Sign up
         </button>
       </form>
+
       {error && <p style={{ color: "red" }}>{error}</p>}
     </div>
   );

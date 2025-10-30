@@ -123,6 +123,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+  max-width: 1000px;
 }
 
 /* Grupp: avsändare + meddelande */
@@ -136,16 +138,16 @@ body {
 /* Namnet över bubblan */
 .sender-name {
   font-size: 0.8rem;
-  font-weight: 600;
+  font-style: italic;
   margin-bottom: 4px;
-  color: #d9d9d9;
+  color: #cfcfcf;
 }
-
-/* Bubblorna */
 .message-bubble {
   padding: 8px 12px;
   border-radius: 10px;
   word-wrap: break-word;
+  background-color: #d9d9d9;
+  color: #2f2f2f;
 }
 
 /* meddelanden (vänster) */
@@ -154,8 +156,7 @@ body {
 }
 
 .received .message-bubble {
-  background-color: #99957c !important;
-  color: #2f2f2f;
+  background-color: #99957c;
   border-top-left-radius: 0;
 }
 
@@ -171,7 +172,6 @@ body {
 
 .sent .message-bubble {
   background-color: #d9d9d9;
-  color: #2f2f2f;
   border-top-right-radius: 0;
 }
 
