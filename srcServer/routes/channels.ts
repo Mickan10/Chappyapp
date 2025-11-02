@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 
 const router = express.Router();
 
-// hämta alla kanaler
+//Hämta alla kanaler
 router.get("/all", async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer "))
@@ -18,12 +18,13 @@ router.get("/all", async (req, res) => {
     return res.status(403).json({ error: "Invalid or expired token" });
 
   try {
+    //CHANNEL_ istället för CHANNEL#
     const result = await db.send(
       new ScanCommand({
         TableName: myTable,
-        FilterExpression: "begins_with(PK, :channelPrefix) AND SK = :meta",
+        FilterExpression: "begins_with(PK, :prefix) AND SK = :meta",
         ExpressionAttributeValues: {
-          ":channelPrefix": "CHANNEL#",
+          ":prefix": "CHANNEL_",
           ":meta": "META",
         },
         ProjectionExpression: "PK, #n",
@@ -38,7 +39,7 @@ router.get("/all", async (req, res) => {
   }
 });
 
-// skicka nytt kanalmeddelande
+//Skicka nytt kanalmeddelande
 router.post("/messages", async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer "))
@@ -58,23 +59,22 @@ router.post("/messages", async (req, res) => {
     const senderId = decoded.userId;
 
     const messageItem = {
-      PK: channelId,
+      PK: channelId, 
       SK: `MESSAGE#${messageId}`,
-      senderId,
+      senderId,      
       text,
       timestamp: Date.now(),
     };
 
     await db.send(new PutCommand({ TableName: myTable, Item: messageItem }));
-
-    res.json({ success: true });
+    res.json({ success: true, message: messageItem });
   } catch (err) {
     console.error("Error saving channel message:", err);
     res.status(500).json({ error: "Failed to save channel message" });
   }
 });
 
-// hämta alla meddelanden i en kanal
+//Hämta alla meddelanden i en kanal
 router.get("/:channelId/messages", async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer "))
@@ -85,7 +85,7 @@ router.get("/:channelId/messages", async (req, res) => {
   if (!decoded)
     return res.status(403).json({ error: "Invalid or expired token" });
 
-  const { channelId } = req.params;
+  const { channelId } = req.params; 
 
   try {
     const result = await db.send(

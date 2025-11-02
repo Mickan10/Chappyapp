@@ -12,5 +12,6 @@ export interface Message {
 
 export interface Channel {
   PK: string;
+  SK?: string;
   name: string;
 }

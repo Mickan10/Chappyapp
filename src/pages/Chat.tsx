@@ -1,22 +1,21 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import chappyLogo from "../assets/chappy.png";
-import type { User, Message, Channel } from "../types"; 
+import type { User, Message, Channel } from "../types";
+import Channels from "./Channels";
 
 export default function Chat() {
   const navigate = useNavigate();
 
-  //TODO zustand
   const [user, setUser] = useState<string>("");
   const [userId, setUserId] = useState<string>("");
   const [users, setUsers] = useState<User[]>([]);
-  const [channels, setChannels] = useState<Channel[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState<string>("");
 
-  // logga ut lokalt i webbläsaren
+  // logga ut
   function handleLogout() {
     localStorage.removeItem("token");
     localStorage.removeItem("userName");
@@ -24,7 +23,7 @@ export default function Chat() {
     navigate("/");
   }
 
-  //Kolla om användaren redan är inloggad
+  // hämta inloggad användare
   useEffect(() => {
     const token = localStorage.getItem("token");
     const name = localStorage.getItem("userName");
@@ -38,7 +37,7 @@ export default function Chat() {
     setUserId(id || "");
   }, [navigate]);
 
-  // hämta andra användare, för chatt
+  // hämta användare (för privata chattar)
   useEffect(() => {
     const token = localStorage.getItem("token");
     async function loadUsers() {
@@ -49,19 +48,6 @@ export default function Chat() {
       setUsers(data);
     }
     loadUsers();
-  }, []);
-
-  // hämta kanaler
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    async function loadChannels() {
-      const res = await fetch("/api/channels/all", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      setChannels(data);
-    }
-    loadChannels();
   }, []);
 
   // hämta privata meddelanden
@@ -82,7 +68,7 @@ export default function Chat() {
     })();
   }, [selectedUser, userId]);
 
-  // hämta kanal-meddelanden
+  // hämta kanalmeddelanden
   useEffect(() => {
     if (!selectedChannel) return;
     const token = localStorage.getItem("token");
@@ -95,12 +81,12 @@ export default function Chat() {
     })();
   }, [selectedChannel]);
 
-  // skicka meddelande, inga tomma meddeladen.
+  // skicka meddelande
   async function sendMessage() {
     if (!text.trim()) return;
     const token = localStorage.getItem("token");
 
-    // privata
+    // privata meddelanden
     if (selectedUser) {
       await fetch("/api/chats/messages", {
         method: "POST",
@@ -118,7 +104,6 @@ export default function Chat() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data: Message[] = await res.json();
-      //visa meddelanden mellan inloggad o vald användare
       const filtered = data.filter(
         (m) =>
           (m.senderId === userId && m.receiverId === selectedUser.PK) ||
@@ -127,7 +112,7 @@ export default function Chat() {
       setMessages(filtered);
     }
 
-    // kanal
+    // kanalmeddelanden
     if (selectedChannel) {
       await fetch("/api/channels/messages", {
         method: "POST",
@@ -167,25 +152,15 @@ export default function Chat() {
 
       <div className="chat-layout">
         <aside className="sidebar">
-          <div className="sidebar-section">
-            <h3>Kanaler</h3>
-            <ul>
-              {channels.length === 0 && <li>Inga kanaler ännu</li>}
-              {channels.map((c) => (
-                <li
-                  key={c.PK}
-                  className={selectedChannel?.PK === c.PK ? "active" : ""}
-                  onClick={() => {
-                    setSelectedChannel(c);
-                    setSelectedUser(null);
-                    setMessages([]);
-                  }}
-                >
-                  #{c.name}
-                </li>
-              ))}
-            </ul>
-          </div>
+          <Channels
+            selectedChannel={selectedChannel}
+            onSelectChannel={(channel) => {
+              setSelectedChannel(channel);
+              setSelectedUser(null);
+              setMessages([]);
+              return channel; 
+            }}
+          />
 
           <div className="sidebar-section">
             <h3>Användare</h3>
@@ -243,7 +218,7 @@ export default function Chat() {
                       : selectedUser
                       ? selectedUser.name
                       : m.senderId}{" "}
-                    –{" "}
+                    -{" "}
                     {new Date(m.timestamp).toLocaleTimeString("sv-SE", {
                       hour: "2-digit",
                       minute: "2-digit",
