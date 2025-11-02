@@ -9,12 +9,6 @@ export default function Login() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  //Om användaren redan har token, skicka till chat
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) navigate("/chat");
-  }, [navigate]);
-
   // TODO - ändra i css o ta bort 
   useEffect(() => {
     document.body.classList.add("login-page");
