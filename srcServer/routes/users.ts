@@ -100,6 +100,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// Hämta alla inloggade användare, ej kanaler
 router.get("/all", async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) {
@@ -113,16 +114,18 @@ router.get("/all", async (req, res) => {
   }
 
   try {
+    //Hämta endast användare (börjar med USER#) som inte är inloggad
     const result = await db.send(
       new ScanCommand({
         TableName: myTable,
-        FilterExpression: "SK = :meta AND PK <> :pk",
+        FilterExpression: "begins_with(PK, :userPrefix) AND SK = :meta AND PK <> :pk",
         ExpressionAttributeValues: {
+          ":userPrefix": "USER#",
           ":meta": "META",
           ":pk": decoded.userId,
         },
         ProjectionExpression: "PK, #n, email",
-        ExpressionAttributeNames: { "#n": "name" }, 
+        ExpressionAttributeNames: { "#n": "name" },
       })
     );
 
@@ -132,6 +135,8 @@ router.get("/all", async (req, res) => {
     res.status(500).json({ error: "Failed to load users" });
   }
 });
+
+
 
 
 export default router;

@@ -1,31 +1,22 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import chappyLogo from "../assets/chappy.png";
-
-// typer för användare och meddelanden
-interface User {
-  PK: string;
-  name: string;
-}
-
-interface Message {
-  senderId: string;
-  receiverId: string;
-  text: string;
-  timestamp: number;
-}
+import type { User, Message, Channel } from "../types"; 
 
 export default function Chat() {
   const navigate = useNavigate();
 
+  //TODO zustand
   const [user, setUser] = useState<string>("");
   const [userId, setUserId] = useState<string>("");
   const [users, setUsers] = useState<User[]>([]);
+  const [channels, setChannels] = useState<Channel[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState<string>("");
 
-  // Logga ut all info och skicka tillbaka till start
+  // logga ut lokalt i webbläsaren
   function handleLogout() {
     localStorage.removeItem("token");
     localStorage.removeItem("userName");
@@ -33,7 +24,7 @@ export default function Chat() {
     navigate("/");
   }
 
-  // Hämta inloggad användare (från localStorage)
+  //Kolla om användaren redan är inloggad
   useEffect(() => {
     const token = localStorage.getItem("token");
     const name = localStorage.getItem("userName");
@@ -43,15 +34,13 @@ export default function Chat() {
       navigate("/");
       return;
     }
-
     setUser(name || "");
     setUserId(id || "");
   }, [navigate]);
 
-  // Hämta alla användare (visas i listan till vänster)
+  // hämta andra användare, för chatt
   useEffect(() => {
     const token = localStorage.getItem("token");
-
     async function loadUsers() {
       const res = await fetch("/api/users/all", {
         headers: { Authorization: `Bearer ${token}` },
@@ -59,71 +48,111 @@ export default function Chat() {
       const data = await res.json();
       setUsers(data);
     }
-
     loadUsers();
   }, []);
 
-  // Hämtar meddelanden för vald användare (när man klickar på någon)
+  // hämta kanaler
   useEffect(() => {
-    if (!selectedUser) return; // Om ingen användare är vald ska inget hända
-
     const token = localStorage.getItem("token");
+    async function loadChannels() {
+      const res = await fetch("/api/channels/all", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setChannels(data);
+    }
+    loadChannels();
+  }, []);
 
-    // själv-anropande async-funktion för att kunna använda await
+  // hämta privata meddelanden
+  useEffect(() => {
+    if (!selectedUser) return;
+    const token = localStorage.getItem("token");
     (async () => {
       const res = await fetch("/api/chats/messages", {
         headers: { Authorization: `Bearer ${token}` },
       });
-
       const data: Message[] = await res.json();
-
-      // filter för att visa bara meddelanden mellan inloggad user och den valda
       const filtered = data.filter(
         (m) =>
           (m.senderId === userId && m.receiverId === selectedUser.PK) ||
           (m.senderId === selectedUser.PK && m.receiverId === userId)
       );
-
       setMessages(filtered);
     })();
   }, [selectedUser, userId]);
 
-  // Skicka meddelande
-  async function sendMessage() {
-    if (!text.trim() || !selectedUser) return; // inget tomt meddelande
+  // hämta kanal-meddelanden
+  useEffect(() => {
+    if (!selectedChannel) return;
+    const token = localStorage.getItem("token");
+    (async () => {
+      const res = await fetch(`/api/channels/${selectedChannel.PK}/messages`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data: Message[] = await res.json();
+      setMessages(data);
+    })();
+  }, [selectedChannel]);
 
+  // skicka meddelande, inga tomma meddeladen.
+  async function sendMessage() {
+    if (!text.trim()) return;
     const token = localStorage.getItem("token");
 
-    await fetch("/api/chats/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        receiverId: selectedUser.PK,
-        text,
-      }),
-    });
+    // privata
+    if (selectedUser) {
+      await fetch("/api/chats/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          receiverId: selectedUser.PK,
+          text,
+        }),
+      });
+
+      const res = await fetch("/api/chats/messages", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data: Message[] = await res.json();
+      //visa meddelanden mellan inloggad o vald användare
+      const filtered = data.filter(
+        (m) =>
+          (m.senderId === userId && m.receiverId === selectedUser.PK) ||
+          (m.senderId === selectedUser.PK && m.receiverId === userId)
+      );
+      setMessages(filtered);
+    }
+
+    // kanal
+    if (selectedChannel) {
+      await fetch("/api/channels/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          channelId: selectedChannel.PK,
+          text,
+        }),
+      });
+
+      const res = await fetch(`/api/channels/${selectedChannel.PK}/messages`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data: Message[] = await res.json();
+      setMessages(data);
+    }
 
     setText("");
-
-    // Ladda om meddelanden efter att man skickat, så de kommer längst upp
-    const res = await fetch("/api/chats/messages", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data: Message[] = await res.json();
-    const filtered = data.filter(
-      (m) =>
-        (m.senderId === userId && m.receiverId === selectedUser.PK) ||
-        (m.senderId === selectedUser.PK && m.receiverId === userId)
-    );
-    setMessages(filtered);
   }
 
   return (
     <div className="chat-page">
-      {/* Övre meny */}
       <header className="topbar">
         <div className="topbar-left">
           <img src={chappyLogo} alt="logo" className="topbar-logo" />
@@ -137,66 +166,96 @@ export default function Chat() {
       </header>
 
       <div className="chat-layout">
-        {/* Sidopanel med användare */}
         <aside className="sidebar">
-          <h3>Användare</h3>
-          <ul>
-            {users.map((u) => (
-              <li
-                key={u.PK}
-                className={selectedUser?.PK === u.PK ? "active" : ""}
-                onClick={() => setSelectedUser(u)}
-              >
-                {u.name}
-              </li>
-            ))}
-          </ul>
+          <div className="sidebar-section">
+            <h3>Kanaler</h3>
+            <ul>
+              {channels.length === 0 && <li>Inga kanaler ännu</li>}
+              {channels.map((c) => (
+                <li
+                  key={c.PK}
+                  className={selectedChannel?.PK === c.PK ? "active" : ""}
+                  onClick={() => {
+                    setSelectedChannel(c);
+                    setSelectedUser(null);
+                    setMessages([]);
+                  }}
+                >
+                  #{c.name}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="sidebar-section">
+            <h3>Användare</h3>
+            <ul>
+              {users.length === 0 && <li>Inga användare ännu</li>}
+              {users.map((u) => (
+                <li
+                  key={u.PK}
+                  className={selectedUser?.PK === u.PK ? "active" : ""}
+                  onClick={() => {
+                    setSelectedUser(u);
+                    setSelectedChannel(null);
+                    setMessages([]);
+                  }}
+                >
+                  {u.name}
+                </li>
+              ))}
+            </ul>
+          </div>
         </aside>
 
-        {/* chatten */}
         <main className="chat-window">
           <div className="chat-header">
-            <h3>{selectedUser ? selectedUser.name : "Välj användare"}</h3>
+            <h3>
+              {selectedChannel
+                ? `#${selectedChannel.name}`
+                : selectedUser
+                ? selectedUser.name
+                : "Välj kanal eller användare"}
+            </h3>
           </div>
 
           <div className="chat-messages">
-            {/* Ingen användare vald */}
-            {!selectedUser && <p>Välj en användare för att börja chatta.</p>}
-
-            {/* Om användare är vald men inga meddelanden */}
+            {!selectedUser && !selectedChannel && (
+              <p>Välj en kanal eller användare för att börja chatta.</p>
+            )}
+            {selectedChannel && messages.length === 0 && (
+              <p>Inga meddelanden i #{selectedChannel.name} ännu.</p>
+            )}
             {selectedUser && messages.length === 0 && (
               <p>Du har inga meddelanden med {selectedUser.name} än.</p>
             )}
-
-            {/* Visa meddelanden bara om användare är vald */}
-            {selectedUser &&
-              messages.map((m, i) => (
-                <div
-                  key={i}
-                  className={`message-group ${
-                    m.senderId === userId ? "sent" : "received"
-                  }`}
-                >
-                  {/* Namn + tid ovanför varje meddelande */}
-                  <div className="sender-name">
-                    <em>
-                      {m.senderId === userId ? user : selectedUser.name} –{" "}
-                      {m.timestamp
-                        ? new Date(m.timestamp).toLocaleTimeString("sv-SE", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : ""}
-                    </em>
-                  </div>
-
-                  <div className="message-bubble">{m.text}</div>
+            {messages.map((m, i) => (
+              <div
+                key={i}
+                className={`message-group ${
+                  m.senderId === userId ? "sent" : "received"
+                }`}
+              >
+                <div className="sender-name">
+                  <em>
+                    {m.senderId === userId
+                      ? user
+                      : selectedUser
+                      ? selectedUser.name
+                      : m.senderId}{" "}
+                    –{" "}
+                    {new Date(m.timestamp).toLocaleTimeString("sv-SE", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </em>
                 </div>
-              ))}
+                <div className="message-bubble">{m.text}</div>
+              </div>
+            ))}
           </div>
 
-          {/* visas bara om man valt användare*/}
-          {selectedUser && (
+          {(selectedUser || selectedChannel) && (
             <div className="chat-input">
               <input
                 value={text}

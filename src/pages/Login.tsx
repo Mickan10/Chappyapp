@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import chappyLogo from "../assets/chappy.png";
 import "./login.css";
@@ -9,13 +9,19 @@ export default function Login() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // för style css
+  //Om användaren redan har token, skicka till chat
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) navigate("/chat");
+  }, [navigate]);
+
+  // TODO - ändra i css o ta bort 
   useEffect(() => {
     document.body.classList.add("login-page");
     return () => document.body.classList.remove("login-page");
   }, []);
 
-  //Hantera inloggning
+  // hantera inloggning
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -34,11 +40,12 @@ export default function Login() {
         return;
       }
 
+      //spara användardata i localStorage
       localStorage.setItem("token", data.token);
       localStorage.setItem("userName", data.name);
       localStorage.setItem("userId", data.userId);
 
-      // Navigera till chatten
+      //navigera till chat
       navigate("/chat");
     } catch (err) {
       console.error("Login error:", err);
@@ -65,9 +72,10 @@ export default function Login() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <button type="submit">Log in</button>
+        <button type="submit">Logga in</button>
+
         <button type="button" onClick={() => navigate("/register")}>
-          Sign up
+          Skapa konto
         </button>
       </form>
 

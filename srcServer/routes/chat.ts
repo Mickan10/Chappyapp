@@ -6,32 +6,26 @@ import { v4 as uuidv4 } from "uuid";
 
 const router = express.Router();
 
-// Hämta alla meddelanden för inloggad användare
+// hämta privata meddelanden
 router.get("/messages", async (req, res) => {
   const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith("Bearer ")) {
+  if (!authHeader?.startsWith("Bearer "))
     return res.status(401).json({ error: "No token provided" });
-  }
 
   const token = authHeader.split(" ")[1];
   const decoded = verifyToken(token);
-  if (!decoded) {
+  if (!decoded)
     return res.status(403).json({ error: "Invalid or expired token" });
-  }
 
   try {
     const userId = decoded.userId;
-
     const result = await db.send(
       new QueryCommand({
         TableName: myTable,
         KeyConditionExpression: "PK = :pk",
-        ExpressionAttributeValues: {
-          ":pk": userId,
-        },
+        ExpressionAttributeValues: { ":pk": userId },
       })
     );
-
     res.json(result.Items || []);
   } catch (err) {
     console.error("Error loading messages:", err);
@@ -39,23 +33,20 @@ router.get("/messages", async (req, res) => {
   }
 });
 
-// Skicka nytt meddelande
+// skicka meddelande mellan användare
 router.post("/messages", async (req, res) => {
   const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith("Bearer ")) {
+  if (!authHeader?.startsWith("Bearer "))
     return res.status(401).json({ error: "No token provided" });
-  }
 
   const token = authHeader.split(" ")[1];
   const decoded = verifyToken(token);
-  if (!decoded) {
+  if (!decoded)
     return res.status(403).json({ error: "Invalid or expired token" });
-  }
 
   const { receiverId, text } = req.body;
-  if (!receiverId || !text) {
+  if (!receiverId || !text)
     return res.status(400).json({ error: "Missing receiverId or text" });
-  }
 
   try {
     const senderId = decoded.userId;
@@ -70,24 +61,14 @@ router.post("/messages", async (req, res) => {
       timestamp: Date.now(),
     };
 
-    // Spara kopia för avsändaren
-    await db.send(
-      new PutCommand({
-        TableName: myTable,
-        Item: messageItem,
-      })
-    );
+    await db.send(new PutCommand(
+      { TableName: myTable, 
+        Item: messageItem }));
 
-    // Spara kopia för mottagaren
-    await db.send(
-      new PutCommand({
-        TableName: myTable,
-        Item: {
-          ...messageItem,
-          PK: receiverId,
-        },
-      })
-    );
+    await db.send(new PutCommand(
+      { TableName: myTable, 
+        Item: { ...messageItem, 
+          PK: receiverId } }));
 
     res.json({ success: true });
   } catch (err) {
