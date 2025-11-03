@@ -155,9 +155,9 @@ export default function Chat() {
           <Channels
             selectedChannel={selectedChannel}
             onSelectChannel={(channel) => {
-              setSelectedChannel(channel);
-              setSelectedUser(null);
-              setMessages([]);
+              setSelectedChannel(channel); //klickar på vald kanal
+              setSelectedUser(null); //rensa gammalt
+              setMessages([]); //tömmer listan
               return channel; 
             }}
           />

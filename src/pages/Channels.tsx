@@ -1,32 +1,30 @@
-import { useState, useEffect } from "react";
-import type { Channel } from "../types";
+import { useState, useEffect } from "react"
+import type { Channel } from "../types"
 
 type ChannelsProps = {
-  selectedChannel: Channel | null;
-  onSelectChannel: (channel: Channel) => Channel; // tar emot en kanal, returnerar en kanal
-};
+  selectedChannel: Channel | null
+  onSelectChannel: (channel: Channel) => Channel
+}
 
-export default function Channels(props: ChannelsProps) {
-  const [channels, setChannels] = useState<Channel[]>([]);
-
-  const selectedChannel = props.selectedChannel;
-  const onSelectChannel = props.onSelectChannel;
+export default function Channels({ selectedChannel, onSelectChannel }: ChannelsProps) {
+  const [channels, setChannels] = useState<Channel[]>([])
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token")
+    
     async function loadChannels() {
       const res = await fetch("/api/channels/all", {
         headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      setChannels(data);
+      })
+      const data = await res.json()
+      setChannels(data)
     }
-    loadChannels();
-  }, []);
+    loadChannels()
+  }, [])
 
   return (
     <div className="sidebar-section">
-      <h3>Channels</h3>
+      <h3>Kanaler</h3>
       <ul>
         {channels.length === 0 && <li>Inga kanaler ännu</li>}
         {channels.map((c) => (
@@ -40,5 +38,5 @@ export default function Channels(props: ChannelsProps) {
         ))}
       </ul>
     </div>
-  );
+  )
 }

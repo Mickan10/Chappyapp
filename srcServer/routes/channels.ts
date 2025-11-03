@@ -8,23 +8,21 @@ const router = express.Router();
 
 //Hämta alla kanaler
 router.get("/all", async (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith("Bearer "))
-    return res.status(401).json({ error: "No token provided" });
+  const auth = req.headers.authorization;
+  if (!auth?.startsWith("Bearer "))
+    return res.status(401).json({ error: "Ingen token." });
 
-  const token = authHeader.split(" ")[1];
-  const decoded = verifyToken(token);
+  const decoded = verifyToken(auth.split(" ")[1]);
   if (!decoded)
-    return res.status(403).json({ error: "Invalid or expired token" });
+    return res.status(403).json({ error: "Ogiltig token." });
 
   try {
-    //CHANNEL_ istället för CHANNEL#
     const result = await db.send(
       new ScanCommand({
         TableName: myTable,
-        FilterExpression: "begins_with(PK, :prefix) AND SK = :meta",
+        FilterExpression: "begins_with(PK, :p) AND SK = :meta",
         ExpressionAttributeValues: {
-          ":prefix": "CHANNEL_",
+          ":p": "CHANNEL_",
           ":meta": "META",
         },
         ProjectionExpression: "PK, #n",
@@ -34,58 +32,51 @@ router.get("/all", async (req, res) => {
 
     res.json(result.Items || []);
   } catch (err) {
-    console.error("Error fetching channels:", err);
-    res.status(500).json({ error: "Failed to load channels" });
+    console.error("Fel vid hämtning:", err);
+    res.status(500).json({ error: "Kunde inte hämta kanaler." });
   }
 });
 
-//Skicka nytt kanalmeddelande
+//Skicka meddelande
 router.post("/messages", async (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith("Bearer "))
-    return res.status(401).json({ error: "No token provided" });
+  const auth = req.headers.authorization;
+  if (!auth?.startsWith("Bearer "))
+    return res.status(401).json({ error: "Ingen token." });
 
-  const token = authHeader.split(" ")[1];
-  const decoded = verifyToken(token);
+  const decoded = verifyToken(auth.split(" ")[1]);
   if (!decoded)
-    return res.status(403).json({ error: "Invalid or expired token" });
+    return res.status(403).json({ error: "Ogiltig token." });
 
   const { channelId, text } = req.body;
   if (!channelId || !text)
-    return res.status(400).json({ error: "Missing channelId or text" });
+    return res.status(400).json({ error: "Kanal eller text saknas." });
 
   try {
-    const messageId = uuidv4();
-    const senderId = decoded.userId;
-
-    const messageItem = {
-      PK: channelId, 
-      SK: `MESSAGE#${messageId}`,
-      senderId,      
+    const message = {
+      PK: channelId,
+      SK: `MESSAGE#${uuidv4()}`,
+      senderId: decoded.userId,
       text,
       timestamp: Date.now(),
     };
 
-    await db.send(new PutCommand({ TableName: myTable, Item: messageItem }));
-    res.json({ success: true, message: messageItem });
+    await db.send(new PutCommand({ TableName: myTable, Item: message }));
+    res.json({ success: true });
   } catch (err) {
-    console.error("Error saving channel message:", err);
-    res.status(500).json({ error: "Failed to save channel message" });
+    console.error("Fel vid skickning:", err);
+    res.status(500).json({ error: "Kunde inte spara meddelande." });
   }
 });
 
-//Hämta alla meddelanden i en kanal
+//Hämta meddelanden i kanal
 router.get("/:channelId/messages", async (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith("Bearer "))
-    return res.status(401).json({ error: "No token provided" });
+  const auth = req.headers.authorization;
+  if (!auth?.startsWith("Bearer "))
+    return res.status(401).json({ error: "Ingen token." });
 
-  const token = authHeader.split(" ")[1];
-  const decoded = verifyToken(token);
+  const decoded = verifyToken(auth.split(" ")[1]);
   if (!decoded)
-    return res.status(403).json({ error: "Invalid or expired token" });
-
-  const { channelId } = req.params; 
+    return res.status(403).json({ error: "Ogiltig token." });
 
   try {
     const result = await db.send(
@@ -93,16 +84,15 @@ router.get("/:channelId/messages", async (req, res) => {
         TableName: myTable,
         KeyConditionExpression: "PK = :pk AND begins_with(SK, :msg)",
         ExpressionAttributeValues: {
-          ":pk": channelId,
+          ":pk": req.params.channelId,
           ":msg": "MESSAGE#",
         },
       })
     );
-
     res.json(result.Items || []);
   } catch (err) {
-    console.error("Error loading channel messages:", err);
-    res.status(500).json({ error: "Failed to load channel messages" });
+    console.error("Fel vid hämtning:", err);
+    res.status(500).json({ error: "Kunde inte hämta kanalmeddelanden." });
   }
 });
 

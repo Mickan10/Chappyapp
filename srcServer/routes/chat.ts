@@ -6,53 +6,50 @@ import { v4 as uuidv4 } from "uuid";
 
 const router = express.Router();
 
-// hämta privata meddelanden
+//Hämta privata meddelanden
 router.get("/messages", async (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith("Bearer "))
-    return res.status(401).json({ error: "No token provided" });
+  const auth = req.headers.authorization;
+  if (!auth?.startsWith("Bearer "))
+    return res.status(401).json({ error: "Ingen token." });
 
-  const token = authHeader.split(" ")[1];
-  const decoded = verifyToken(token);
+  const decoded = verifyToken(auth.split(" ")[1]);
   if (!decoded)
-    return res.status(403).json({ error: "Invalid or expired token" });
+    return res.status(403).json({ error: "Ogiltig token." });
 
   try {
-    const userId = decoded.userId;
     const result = await db.send(
       new QueryCommand({
         TableName: myTable,
         KeyConditionExpression: "PK = :pk",
-        ExpressionAttributeValues: { ":pk": userId },
+        ExpressionAttributeValues: { ":pk": decoded.userId },
       })
     );
     res.json(result.Items || []);
   } catch (err) {
-    console.error("Error loading messages:", err);
-    res.status(500).json({ error: "Failed to load messages" });
+    console.error("Fel vid hämtning:", err);
+    res.status(500).json({ error: "Kunde inte hämta meddelanden." });
   }
 });
 
-// skicka meddelande mellan användare
+//Skicka meddelande
 router.post("/messages", async (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith("Bearer "))
-    return res.status(401).json({ error: "No token provided" });
+  const auth = req.headers.authorization;
+  if (!auth?.startsWith("Bearer "))
+    return res.status(401).json({ error: "Ingen token." });
 
-  const token = authHeader.split(" ")[1];
-  const decoded = verifyToken(token);
+  const decoded = verifyToken(auth.split(" ")[1]);
   if (!decoded)
-    return res.status(403).json({ error: "Invalid or expired token" });
+    return res.status(403).json({ error: "Ogiltig token." });
 
   const { receiverId, text } = req.body;
   if (!receiverId || !text)
-    return res.status(400).json({ error: "Missing receiverId or text" });
+    return res.status(400).json({ error: "Mottagare eller text saknas." });
 
   try {
     const senderId = decoded.userId;
     const messageId = uuidv4();
 
-    const messageItem = {
+    const message = {
       PK: senderId,
       SK: `MESSAGE#${messageId}`,
       senderId,
@@ -61,19 +58,16 @@ router.post("/messages", async (req, res) => {
       timestamp: Date.now(),
     };
 
-    await db.send(new PutCommand(
-      { TableName: myTable, 
-        Item: messageItem }));
-
-    await db.send(new PutCommand(
-      { TableName: myTable, 
-        Item: { ...messageItem, 
-          PK: receiverId } }));
+    await db.send(new PutCommand({ TableName: myTable, Item: message }));
+    await db.send(new PutCommand({
+      TableName: myTable,
+      Item: { ...message, PK: receiverId },
+    }));
 
     res.json({ success: true });
   } catch (err) {
-    console.error("Error sending message:", err);
-    res.status(500).json({ error: "Failed to send message" });
+    console.error("Fel vid skickning:", err);
+    res.status(500).json({ error: "Kunde inte skicka meddelande." });
   }
 });
 

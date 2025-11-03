@@ -1,49 +1,44 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import chappyLogo from "../assets/chappy.png";
-import "./login.css";
+import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
+import chappyLogo from "../assets/chappy.png"
+import "./login.css"
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const navigate = useNavigate();
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
+  const navigate = useNavigate()
 
-  // TODO - ändra i css o ta bort 
   useEffect(() => {
-    document.body.classList.add("login-page");
-    return () => document.body.classList.remove("login-page");
-  }, []);
+    document.body.classList.add("login-page")
+    return () => document.body.classList.remove("login-page")
+  }, [])
 
-  // hantera inloggning
   async function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
+    e.preventDefault()
+    setError("")
 
     try {
       const res = await fetch("/api/users/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
-      });
+      })
 
-      const data = await res.json();
+      const data = await res.json()
 
       if (!res.ok) {
-        setError(data.error || "Login failed");
-        return;
+        setError(data.error || "Fel användarnamn eller lösenord")
+        return
       }
 
-      //spara användardata i localStorage
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("userName", data.name);
-      localStorage.setItem("userId", data.userId);
+      localStorage.setItem("token", data.token)
+      localStorage.setItem("userName", data.name)
+      localStorage.setItem("userId", data.userId)
 
-      //navigera till chat
-      navigate("/chat");
-    } catch (err) {
-      console.error("Login error:", err);
-      setError("Network error");
+      navigate("/chat")
+    } catch {
+      setError("Nätverksfel, försök igen")
     }
   }
 
@@ -67,13 +62,12 @@ export default function Login() {
           required
         />
         <button type="submit">Logga in</button>
-
         <button type="button" onClick={() => navigate("/register")}>
           Skapa konto
         </button>
       </form>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && <p className="error-text">{error}</p>}
     </div>
-  );
+  )
 }

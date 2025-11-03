@@ -7,16 +7,14 @@ import bcrypt from "bcrypt";
 
 const router = express.Router();
 
-// skapa ny användare
+//Registrera användare
 router.post("/register", async (req, res) => {
   const { email, name, password } = req.body;
-
-  if (!email || !password || !name) {
-    return res.status(400).json({ success: false, error: "Missing required fields." });
-  }
+  if (!email || !name || !password)
+    return res.status(400).json({ error: "Fyll i alla fält." });
 
   try {
-    // kolla om email redan finns reg.
+    //Kolla om email redan finns
     const existing = await db.send(
       new ScanCommand({
         TableName: myTable,
@@ -24,15 +22,11 @@ router.post("/register", async (req, res) => {
         ExpressionAttributeValues: { ":email": email },
       })
     );
+    if (existing.Count && existing.Count > 0)
+      return res.status(400).json({ error: "Användare finns redan." });
 
-    if (existing.Count && existing.Count > 0) {
-      return res.status(400).json({ success: false, error: "User already exists." });
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // skapar ett unikt user#id
+    //Hasha lösenord
+    const hashedPassword = await bcrypt.hash(password, 10);
     const userId = uuidv4();
 
     await db.send(
@@ -43,28 +37,25 @@ router.post("/register", async (req, res) => {
           SK: "META",
           email,
           name,
-          password: hashedPassword, //lösen blir hashade
+          password: hashedPassword,
         },
       })
     );
 
-    res.json({ success: true, message: "User created successfully." });
-  } catch (error) {
-    console.error("Register error:", error);
-    res.status(500).json({ success: false, error: "Server error during registration." });
+    res.json({ message: "Användare skapad!" });
+  } catch (err) {
+    console.error("Register error:", err);
+    res.status(500).json({ error: "Serverfel vid registrering." });
   }
 });
 
-// LOGIN redan reg användare
+//Logga in
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ success: false, error: "Missing email or password." });
-  }
+  if (!email || !password)
+    return res.status(400).json({ error: "Fyll i email och lösenord." });
 
   try {
-    // hitta användare via email
     const result = await db.send(
       new ScanCommand({
         TableName: myTable,
@@ -72,57 +63,46 @@ router.post("/login", async (req, res) => {
         ExpressionAttributeValues: { ":email": email },
       })
     );
+    const user = result.Items?.[0];
+    if (!user) return res.status(404).json({ error: "Användare saknas." });
 
-    if (!result.Items || result.Items.length === 0) {
-      return res.status(404).json({ success: false, error: "User not found." });
-    }
+    const match = await bcrypt.compare(password, user.password);
+    if (!match)
+      return res.status(401).json({ error: "Fel lösenord." });
 
-    const user = result.Items[0];
-
-   const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res
-        .status(401)
-        .json({ success: false, error: "Invalid password." });
-    }
-
-    // skapa JWT
     const token = createToken({
       userId: user.PK,
       email: user.email,
       name: user.name,
     });
 
-    res.json({ success: true, token, name: user.name, userId: user.PK });
-  } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ success: false, error: "Server error during login." });
+    res.json({ token, name: user.name, userId: user.PK });
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).json({ error: "Serverfel vid inloggning." });
   }
 });
 
-// Hämta alla inloggade användare, ej kanaler
+//Hämta alla användare i chatten
 router.get("/all", async (req, res) => {
   const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "No token provided" });
-  }
+  if (!authHeader?.startsWith("Bearer "))
+    return res.status(401).json({ error: "Ingen token." });
 
   const token = authHeader.split(" ")[1];
   const decoded = verifyToken(token);
-  if (!decoded || typeof decoded === "string") {
-    return res.status(403).json({ error: "Invalid or expired token" });
-  }
+  if (!decoded) return res.status(403).json({ error: "Ogiltig token." });
 
   try {
-    //Hämta endast användare (börjar med USER#) som inte är inloggad
     const result = await db.send(
       new ScanCommand({
         TableName: myTable,
-        FilterExpression: "begins_with(PK, :userPrefix) AND SK = :meta AND PK <> :pk",
+        FilterExpression:
+          "begins_with(PK, :prefix) AND SK = :meta AND PK <> :myId",
         ExpressionAttributeValues: {
-          ":userPrefix": "USER#",
+          ":prefix": "USER#",
           ":meta": "META",
-          ":pk": decoded.userId,
+          ":myId": decoded.userId,
         },
         ProjectionExpression: "PK, #n, email",
         ExpressionAttributeNames: { "#n": "name" },
@@ -132,11 +112,8 @@ router.get("/all", async (req, res) => {
     res.json(result.Items || []);
   } catch (err) {
     console.error("Error fetching users:", err);
-    res.status(500).json({ error: "Failed to load users" });
+    res.status(500).json({ error: "Kunde inte hämta användare." });
   }
 });
-
-
-
 
 export default router;
