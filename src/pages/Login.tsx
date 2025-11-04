@@ -62,8 +62,13 @@ export default function Login() {
           required
         />
         <button type="submit">Logga in</button>
+
         <button type="button" onClick={() => navigate("/register")}>
           Skapa konto
+        </button>
+        
+        <button type="button" onClick={() => navigate("/guest-login")}>
+          Logga in som gäst
         </button>
       </form>
 
