@@ -5,6 +5,7 @@ export interface User {
 
 export interface Message {
   senderId: string;
+  senderName?: string;
   receiverId?: string;
   text: string;
   timestamp: number;

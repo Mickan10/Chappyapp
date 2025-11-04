@@ -3,6 +3,11 @@ import { useNavigate } from "react-router-dom";
 import chappyLogo from "../assets/chappy.png";
 import type { User, Message, Channel } from "../types";
 import Channels from "./Channels";
+import reklamImage from "../assets/reklam.png";
+import avatar1 from "../assets/avatar1.png";
+import avatar2 from "../assets/avatar2.png";
+import avatar3 from "../assets/avatar3.png";
+import avatar4 from "../assets/avatar4.png";
 
 export default function Chat() {
   const navigate = useNavigate();
@@ -15,7 +20,17 @@ export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState<string>("");
 
-  // logga ut
+  const avatars = [avatar1, avatar2, avatar3, avatar4];
+
+  function getAvatarForUser(userId: string) {
+    const index =
+      Math.abs(
+        userId.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0)
+      ) % avatars.length;
+    return avatars[index];
+  }
+
+  // Logga ut
   function handleLogout() {
     localStorage.removeItem("token");
     localStorage.removeItem("userName");
@@ -23,7 +38,7 @@ export default function Chat() {
     navigate("/");
   }
 
-  // hämta inloggad användare
+  // Hämta inloggad användare
   useEffect(() => {
     const token = localStorage.getItem("token");
     const name = localStorage.getItem("userName");
@@ -37,7 +52,7 @@ export default function Chat() {
     setUserId(id || "");
   }, [navigate]);
 
-  // hämta användare (för privata chattar)
+  // Hämta alla användare
   useEffect(() => {
     const token = localStorage.getItem("token");
     async function loadUsers() {
@@ -50,7 +65,7 @@ export default function Chat() {
     loadUsers();
   }, []);
 
-  // hämta privata meddelanden
+  // Hämta privata meddelanden
   useEffect(() => {
     if (!selectedUser) return;
     const token = localStorage.getItem("token");
@@ -68,7 +83,7 @@ export default function Chat() {
     })();
   }, [selectedUser, userId]);
 
-  // hämta kanalmeddelanden
+  // Hämta kanalmeddelanden
   useEffect(() => {
     if (!selectedChannel) return;
     const token = localStorage.getItem("token");
@@ -81,12 +96,11 @@ export default function Chat() {
     })();
   }, [selectedChannel]);
 
-  // skicka meddelande
+  // Skicka meddelande
   async function sendMessage() {
     if (!text.trim()) return;
     const token = localStorage.getItem("token");
 
-    // privata meddelanden
     if (selectedUser) {
       await fetch("/api/chats/messages", {
         method: "POST",
@@ -112,7 +126,6 @@ export default function Chat() {
       setMessages(filtered);
     }
 
-    // kanalmeddelanden
     if (selectedChannel) {
       await fetch("/api/channels/messages", {
         method: "POST",
@@ -138,6 +151,7 @@ export default function Chat() {
 
   return (
     <div className="chat-page">
+      {/* Topbar */}
       <header className="topbar">
         <div className="topbar-left">
           <img src={chappyLogo} alt="logo" className="topbar-logo" />
@@ -145,20 +159,21 @@ export default function Chat() {
         <div className="topbar-right">
           <button className="btn-user">{user}</button>
           <button className="btn-logout" onClick={handleLogout}>
-            Log out
+            Logga ut
           </button>
         </div>
       </header>
 
       <div className="chat-layout">
+        {/* Sidebar */}
         <aside className="sidebar">
           <Channels
             selectedChannel={selectedChannel}
             onSelectChannel={(channel) => {
-              setSelectedChannel(channel); //klickar på vald kanal
-              setSelectedUser(null); //rensa gammalt
-              setMessages([]); //tömmer listan
-              return channel; 
+              setSelectedChannel(channel);
+              setSelectedUser(null);
+              setMessages([]);
+              return channel;
             }}
           />
 
@@ -183,20 +198,32 @@ export default function Chat() {
           </div>
         </aside>
 
+        {/* Chatten */}
         <main className="chat-window">
           <div className="chat-header">
-            <h3>
-              {selectedChannel
-                ? `#${selectedChannel.name}`
-                : selectedUser
-                ? selectedUser.name
-                : "Välj kanal eller användare"}
-            </h3>
+            {selectedChannel && (
+              <h3># {selectedChannel.name}</h3>
+            )}
+
+            {selectedUser && (
+              <div className="chat-header-user">
+                <img
+                  src={getAvatarForUser(selectedUser.PK)}
+                  alt="Avatar"
+                  className="header-avatar"
+                />
+                <h3>{selectedUser.name}</h3>
+              </div>
+            )}
+
+            {!selectedUser && !selectedChannel && (
+              <h3>Välj kanal eller användare</h3>
+            )}
           </div>
 
           <div className="chat-messages">
             {!selectedUser && !selectedChannel && (
-              <p>Välj en kanal eller användare för att börja chatta.</p>
+              <p>Hoppa in i en kanal eller välj någon att snacka med.</p>
             )}
             {selectedChannel && messages.length === 0 && (
               <p>Inga meddelanden i #{selectedChannel.name} ännu.</p>
@@ -204,6 +231,7 @@ export default function Chat() {
             {selectedUser && messages.length === 0 && (
               <p>Du har inga meddelanden med {selectedUser.name} än.</p>
             )}
+
             {messages.map((m, i) => (
               <div
                 key={i}
@@ -211,19 +239,22 @@ export default function Chat() {
                   m.senderId === userId ? "sent" : "received"
                 }`}
               >
-                <div className="sender-name">
-                  <em>
+                <div className="sender-info">
+                  <em className="sender-name">
                     {m.senderId === userId
                       ? user
-                      : selectedUser
-                      ? selectedUser.name
-                      : m.senderId}{" "}
-                    -{" "}
+                      : m.senderName
+                      ? m.senderName
+                      : users.find((u) => u.PK === m.senderId)?.name ||
+                        m.senderId}
+                  </em>
+                  <span className="message-time">
+                    {" "}-{" "}
                     {new Date(m.timestamp).toLocaleTimeString("sv-SE", {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
-                  </em>
+                  </span>
                 </div>
                 <div className="message-bubble">{m.text}</div>
               </div>
@@ -237,10 +268,20 @@ export default function Chat() {
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Aa..."
               />
-              <button onClick={sendMessage}>Send</button>
+              <button onClick={sendMessage}>Skicka</button>
             </div>
           )}
         </main>
+
+        {/* Reklam */}
+        <div className="side-panel">
+          <p>Annons:</p>
+          <img
+            src={reklamImage}
+            alt="Reklam: Chappy Premium"
+            className="ad-image"
+          />
+        </div>
       </div>
     </div>
   );

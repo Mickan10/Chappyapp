@@ -13,15 +13,10 @@ body {
   height: 100vh;
 }
 
-.sloggan {
-  font-size: 13px;
-  margin-left: 45px;
-  color: #767f80;
-}
-
 .chat-layout {
   display: flex;
   flex: 1;
+  height: 100%;
 }
 
 /* header */
@@ -48,7 +43,7 @@ body {
 .topbar-right button {
   background: none;
   border: none;
-  padding: 5px 32px;
+  padding: 10px 32px;
   border-radius: 6px;
   cursor: pointer;
 }
@@ -60,8 +55,39 @@ body {
 }
 
 .topbar-right .btn-logout 
-{ background-color: #343231 !important;
+{ background-color: #525150 !important;
   color: rgb(231, 228, 228);
+}
+
+/* chat header */
+.chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid #d6d0d0;
+  padding: 10px;
+  min-height: 60px;
+  color: #f3efef;
+}
+
+.chat-header-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #99957c;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
+}
+
+.chat-header h3 {
+  font-size: 1.4rem;
+  margin: 0;
 }
 
 /* kanaler/meddelanden */
@@ -93,8 +119,8 @@ body {
 }
 
 .sidebar li.active {
-  font-weight: bold;
-  color: white;
+  font-weight: 600;
+  color: #99957c;
 }
 
 .sidebar li:hover {
@@ -108,10 +134,11 @@ body {
   flex-direction: column;
   background: linear-gradient(180deg, #334041, #313C3D, #293031);
   padding: 10px;
+  max-width: 1000px;  
+  width: 100%;
 }
 
 .chat-header {
-  padding-bottom: 10px;
   border-bottom: 1px solid #d6d0d0;
 }
 
@@ -127,14 +154,13 @@ body {
   max-width: 1000px;
 }
 
-/* Grupp: avsändare + meddelande */
+/* avsändare + meddelande */
 .message-group {
   display: flex;
   flex-direction: column;
   max-width: 70%;
 }
 
-/* TODO */
 /* Namnet över bubblan */
 .sender-name {
   font-size: 0.8rem;
@@ -142,12 +168,21 @@ body {
   margin-bottom: 4px;
   color: #cfcfcf;
 }
+
 .message-bubble {
-  padding: 8px 12px;
-  border-radius: 10px;
+  padding: 10px 30px;
+  border-radius: 14px;
+  margin: 10px;
   word-wrap: break-word;
   background-color: #d9d9d9;
   color: #2f2f2f;
+  line-height: 1.4;
+  font-size: 18px;
+  font-weight: 400;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  max-width: 100%;
+  white-space: pre-wrap; 
+  transition: all 0.2s ease;
 }
 
 /* meddelanden (vänster) */
@@ -156,7 +191,7 @@ body {
 }
 
 .received .message-bubble {
-  background-color: #99957c;
+  background-color: #92a596c1;
   border-top-left-radius: 0;
 }
 
@@ -171,14 +206,19 @@ body {
 }
 
 .sent .message-bubble {
-  background-color: #d9d9d9;
+  background-color: #d0dfd3c1;
   border-top-right-radius: 0;
 }
-
 
 /* Input */
 .chat-input {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  max-width: 1000px;  
+  width: 100%;
+  margin: 0 auto;     
   padding-top: 10px;
   border-top: 1px solid #dcd8d8;
 }
@@ -193,11 +233,30 @@ body {
 }
 
 .chat-input button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
   background-color: #92a596b3;
   color: white;
-  border: none;
-  margin-left: 6px;
-  border-radius: 6px;
-  padding: 10px 16px;
   cursor: pointer;
+}
+
+/* höger reklamruta */
+.side-panel {
+  width: 250px;
+  background: linear-gradient(180deg, #3e4b4c, #2f393a);
+  padding: 15px;
+  border-left: 1px solid #444;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #e0e0e0;
+}
+
+.side-panel img {
+  width: 100%;
+  height: 80%;
+  border-radius: 10px;
+  margin-top: 20px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
 }
