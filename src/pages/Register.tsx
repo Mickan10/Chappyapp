@@ -46,31 +46,15 @@ export default function Register() {
       <h2>Skapa konto</h2>
 
       <form className="register-form" onSubmit={handleRegister}>
-        <input
-          type="text"
-          placeholder="Namn"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-        <input
-          type="email"
-          placeholder="E-post"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Lösenord"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button type="submit">Registrera</button>
-      </form>
+        <input type="text"placeholder="Namn"value={name} onChange={(e) => setName(e.target.value)} required/>
 
-      <button onClick={() => navigate("/")}>Tillbaka till login</button>
+        <input type="email" placeholder="E-post" value={email} onChange={(e) => setEmail(e.target.value)} required/>
+        
+        <input type="password" placeholder="Lösenord" value={password} onChange={(e) => setPassword(e.target.value)} required/>
+        
+        <button type="submit">Registrera</button>
+        <button onClick={() => navigate("/")}>Tillbaka till login</button>
+      </form>
 
       {message && <p className="status-message">{message}</p>}
     </div>

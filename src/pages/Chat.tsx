@@ -263,11 +263,7 @@ export default function Chat() {
 
           {(selectedUser || selectedChannel) && (
             <div className="chat-input">
-              <input
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder="Aa..."
-              />
+              <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Aa..."/>
               <button onClick={sendMessage}>Skicka</button>
             </div>
           )}
