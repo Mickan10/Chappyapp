@@ -14,6 +14,7 @@ export default function Chat() {
 
   const [user, setUser] = useState<string>("");
   const [userId, setUserId] = useState<string>("");
+  const [role, setRole] = useState<string>(""); //Se om det är gäst eller användare
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
@@ -30,31 +31,35 @@ export default function Chat() {
     return avatars[index];
   }
 
-  // Logga ut
+  //Logga ut
   function handleLogout() {
     localStorage.removeItem("token");
     localStorage.removeItem("userName");
     localStorage.removeItem("userId");
+    localStorage.removeItem("userRole");
     navigate("/");
   }
 
-  // Hämta inloggad användare
+  //Hämta inloggad användare
   useEffect(() => {
     const token = localStorage.getItem("token");
     const name = localStorage.getItem("userName");
     const id = localStorage.getItem("userId");
-
+    const role = localStorage.getItem("userRole");
     if (!token) {
       navigate("/");
       return;
     }
     setUser(name || "");
     setUserId(id || "");
+    setRole(role || "user"); 
   }, [navigate]);
 
-  // Hämta alla användare
+  //Hämta alla användare
   useEffect(() => {
+    if (role === "guest") return; //gäster ska inte kunna hämta användare
     const token = localStorage.getItem("token");
+
     async function loadUsers() {
       const res = await fetch("/api/users/all", {
         headers: { Authorization: `Bearer ${token}` },
@@ -63,7 +68,7 @@ export default function Chat() {
       setUsers(data);
     }
     loadUsers();
-  }, []);
+  }, [role]);
 
   // Hämta privata meddelanden
   useEffect(() => {
@@ -102,6 +107,7 @@ export default function Chat() {
     const token = localStorage.getItem("token");
 
     if (selectedUser) {
+      //meddelanden mellan bara användare
       await fetch("/api/chats/messages", {
         method: "POST",
         headers: {
@@ -113,20 +119,10 @@ export default function Chat() {
           text,
         }),
       });
-
-      const res = await fetch("/api/chats/messages", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data: Message[] = await res.json();
-      const filtered = data.filter(
-        (m) =>
-          (m.senderId === userId && m.receiverId === selectedUser.PK) ||
-          (m.senderId === selectedUser.PK && m.receiverId === userId)
-      );
-      setMessages(filtered);
     }
 
     if (selectedChannel) {
+      // Kanal
       await fetch("/api/channels/messages", {
         method: "POST",
         headers: {
@@ -138,7 +134,6 @@ export default function Chat() {
           text,
         }),
       });
-
       const res = await fetch(`/api/channels/${selectedChannel.PK}/messages`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -167,9 +162,7 @@ export default function Chat() {
       <div className="chat-layout">
         {/* Sidebar */}
         <aside className="sidebar">
-          <Channels
-            selectedChannel={selectedChannel}
-            onSelectChannel={(channel) => {
+          <Channels selectedChannel={selectedChannel} onSelectChannel={(channel) => {
               setSelectedChannel(channel);
               setSelectedUser(null);
               setMessages([]);
@@ -177,41 +170,35 @@ export default function Chat() {
             }}
           />
 
-          <div className="sidebar-section">
-            <h3>Användare</h3>
-            <ul>
-              {users.length === 0 && <li>Inga användare ännu</li>}
-              {users.map((u) => (
-                <li
-                  key={u.PK}
-                  className={selectedUser?.PK === u.PK ? "active" : ""}
-                  onClick={() => {
-                    setSelectedUser(u);
-                    setSelectedChannel(null);
-                    setMessages([]);
-                  }}
-                >
-                  {u.name}
-                </li>
-              ))}
-            </ul>
-          </div>
+          {/*Göm användare för Gäster*/}
+          {role !== "guest" && (
+            <div className="sidebar-section">
+              <h3>Användare</h3>
+              <ul>
+                {users.length === 0 && <li>Inga användare ännu</li>}
+                {users.map((u) => (
+                  <li key={u.PK} className={selectedUser?.PK === u.PK ? "active" : ""} onClick={() => {
+                      setSelectedUser(u);
+                      setSelectedChannel(null);
+                      setMessages([]);
+                    }}
+                  >
+                    {u.name}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </aside>
 
         {/* Chatten */}
         <main className="chat-window">
           <div className="chat-header">
-            {selectedChannel && (
-              <h3># {selectedChannel.name}</h3>
-            )}
+            {selectedChannel && <h3># {selectedChannel.name}</h3>}
 
             {selectedUser && (
               <div className="chat-header-user">
-                <img
-                  src={getAvatarForUser(selectedUser.PK)}
-                  alt="Avatar"
-                  className="header-avatar"
-                />
+                <img src={getAvatarForUser(selectedUser.PK)} alt="Avatar" className="header-avatar"/>
                 <h3>{selectedUser.name}</h3>
               </div>
             )}
@@ -222,32 +209,18 @@ export default function Chat() {
           </div>
 
           <div className="chat-messages">
-            {!selectedUser && !selectedChannel && (
-              <p>Hoppa in i en kanal eller välj någon att snacka med.</p>
-            )}
-            {selectedChannel && messages.length === 0 && (
-              <p>Inga meddelanden i #{selectedChannel.name} ännu.</p>
-            )}
-            {selectedUser && messages.length === 0 && (
-              <p>Du har inga meddelanden med {selectedUser.name} än.</p>
-            )}
-
             {messages.map((m, i) => (
-              <div
-                key={i}
-                className={`message-group ${
-                  m.senderId === userId ? "sent" : "received"
-                }`}
-              >
+              
+              <div key={i} className={`message-group ${
+                 m.senderId === userId ? "sent" : "received"}`}>
+                
                 <div className="sender-info">
                   <em className="sender-name">
                     {m.senderId === userId
                       ? user
-                      : m.senderName
-                      ? m.senderName
-                      : users.find((u) => u.PK === m.senderId)?.name ||
-                        m.senderId}
+                      : m.senderName || "Okänd"}
                   </em>
+                  
                   <span className="message-time">
                     {" "}-{" "}
                     {new Date(m.timestamp).toLocaleTimeString("sv-SE", {
@@ -256,6 +229,7 @@ export default function Chat() {
                     })}
                   </span>
                 </div>
+
                 <div className="message-bubble">{m.text}</div>
               </div>
             ))}
@@ -272,11 +246,7 @@ export default function Chat() {
         {/* Reklam */}
         <div className="side-panel">
           <p>Annons:</p>
-          <img
-            src={reklamImage}
-            alt="Reklam: Chappy Premium"
-            className="ad-image"
-          />
+          <img src={reklamImage} alt="Reklam: Chappy Premium" className="ad-image"/>
         </div>
       </div>
     </div>

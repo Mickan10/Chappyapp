@@ -83,6 +83,24 @@ router.post("/login", async (req, res) => {
   }
 });
 
+//gästinloggning
+router.post("/guest", async (req, res) => {
+  const { name } = req.body;
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: "Namn krävs för gästinloggning." });
+  }
+
+  const guestName = name.trim();
+  const guestId = `guest-${Date.now()}`;
+  const token = `guest-token:${guestName}`;
+
+  return res.json({
+    token,
+    name: guestName,
+    userId: guestId,
+  });
+});
+
 //Hämta alla användare i chatten
 router.get("/all", async (req, res) => {
   const authHeader = req.headers.authorization;
@@ -93,6 +111,12 @@ router.get("/all", async (req, res) => {
   const decoded = verifyToken(token);
   if (!decoded) return res.status(403).json({ error: "Ogiltig token." });
 
+  //Gäst hoppas över
+  if (decoded.role === "guest") {
+    return res.json([]); 
+  }
+
+  //Inloggade användare hämtas från databasen
   try {
     const result = await db.send(
       new ScanCommand({
@@ -111,9 +135,10 @@ router.get("/all", async (req, res) => {
 
     res.json(result.Items || []);
   } catch (err) {
-    console.error("Error fetching users:", err);
+    console.error("Gick inte hämta användare:", err);
     res.status(500).json({ error: "Kunde inte hämta användare." });
   }
 });
+
 
 export default router;

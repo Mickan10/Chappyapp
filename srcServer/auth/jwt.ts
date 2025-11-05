@@ -4,8 +4,9 @@ const secret = process.env.JWT_SECRET || "superhemligt";
 
 export interface MyJwtPayload extends JwtPayload {
   userId: string;
-  email: string;
+  email?: string;
   name: string;
+  role?: string;
 }
 
 export function createToken(payload: MyJwtPayload): string {
@@ -13,12 +14,25 @@ export function createToken(payload: MyJwtPayload): string {
 }
 
 export function verifyToken(token: string): MyJwtPayload | null {
+  if (!token) return null;
+
   try {
+    //TODO  return as
     const decoded = jwt.verify(token, secret);
-    // Kontrollera att det verkligen är ett objekt
     if (typeof decoded === "string") return null;
     return decoded as MyJwtPayload;
   } catch {
+    // Fångar upp gäst
+    if (token.startsWith("guest-token:")) {
+      const name = token.split(":")[1] || "Gäst";
+      return {
+        userId: `guest-${Date.now()}`,
+        name,
+        role: "guest",
+        iat: Math.floor(Date.now() / 1000),
+      };
+    }
+
     return null;
   }
 }

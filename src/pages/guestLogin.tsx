@@ -44,17 +44,17 @@ export default function GuestLogin() {
     <div className="login-container">
       <h2>Gästinloggning</h2>
       <div className="login-form">
-        <input
-          type="text"
-          placeholder="Ditt namn"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+
+        <input type="text" placeholder="Ditt namn" value={name} onChange={(e) => setName(e.target.value)}/>
+
         <button onClick={handleGuestLogin}>Fortsätt till chatten</button>
+
         <button type="button" onClick={() => navigate("/")}>
           Tillbaka till login
         </button>
+
         {error && <p>{error}</p>}
+
       </div>
     </div>
   );

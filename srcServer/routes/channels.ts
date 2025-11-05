@@ -8,49 +8,70 @@ const router = express.Router();
 
 //Hämta alla kanaler
 router.get("/all", async (req, res) => {
-  const auth = req.headers.authorization;
-  if (!auth?.startsWith("Bearer "))
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Ingen token." });
+  }
 
-  const decoded = verifyToken(auth.split(" ")[1]);
-  if (!decoded)
+  const token = authHeader.split(" ")[1];
+  const decoded = verifyToken(token);
+  if (!decoded) {
     return res.status(403).json({ error: "Ogiltig token." });
+  }
 
   try {
-    const result = await db.send(
-      new ScanCommand({
-        TableName: myTable,
-        FilterExpression: "begins_with(PK, :p) AND SK = :meta",
-        ExpressionAttributeValues: {
-          ":p": "CHANNEL_",
-          ":meta": "META",
-        },
-        ProjectionExpression: "PK, #n",
-        ExpressionAttributeNames: { "#n": "name" },
-      })
-    );
+    const isGuest = decoded.role === "guest";
 
+    //Gäst bara kanaler som inte är låsta
+    const params = isGuest
+      ? {
+          TableName: myTable,
+          FilterExpression:
+            "begins_with(PK, :p) AND SK = :meta AND (attribute_not_exists(isPrivate) OR isPrivate = :false)",
+          ExpressionAttributeValues: {
+            ":p": "CHANNEL_",
+            ":meta": "META",
+            ":false": false,
+          },
+          ProjectionExpression: "PK, #n",
+          ExpressionAttributeNames: { "#n": "name" },
+        }
+      : {
+          TableName: myTable,
+          FilterExpression: "begins_with(PK, :p) AND SK = :meta",
+          ExpressionAttributeValues: {
+            ":p": "CHANNEL_",
+            ":meta": "META",
+          },
+          ProjectionExpression: "PK, #n",
+          ExpressionAttributeNames: { "#n": "name" },
+        };
+
+    const result = await db.send(new ScanCommand(params));
     res.json(result.Items || []);
   } catch (err) {
-    console.error("Fel vid hämtning:", err);
+    console.error("Fel vid hämtning av kanaler:", err);
     res.status(500).json({ error: "Kunde inte hämta kanaler." });
   }
 });
 
-//Skicka nytt kanalmeddelande
+//Meddelanden i kanalerna
 router.post("/messages", async (req, res) => {
   const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith("Bearer "))
-    return res.status(401).json({ error: "No token provided" });
+  if (!authHeader?.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Ingen token." });
+  }
 
   const token = authHeader.split(" ")[1];
   const decoded = verifyToken(token);
-  if (!decoded)
-    return res.status(403).json({ error: "Invalid or expired token" });
+  if (!decoded) {
+    return res.status(403).json({ error: "Ogiltig token." });
+  }
 
   const { channelId, text } = req.body;
-  if (!channelId || !text)
-    return res.status(400).json({ error: "Missing channelId or text" });
+  if (!channelId || !text) {
+    return res.status(400).json({ error: "Saknar kanal eller meddelande." });
+  }
 
   try {
     const messageId = uuidv4();
@@ -59,30 +80,32 @@ router.post("/messages", async (req, res) => {
       PK: channelId,
       SK: `MESSAGE#${messageId}`,
       senderId: decoded.userId,
-      senderName: decoded.name, 
+      senderName:
+        decoded.role === "guest" ? `Gäst – ${decoded.name}` : decoded.name,
       text,
-      timestamp: Date.now(),
+      timestamp: new Date().toISOString(),
     };
 
     await db.send(new PutCommand({ TableName: myTable, Item: messageItem }));
-
     res.json({ success: true, message: messageItem });
   } catch (err) {
-    console.error("Error saving channel message:", err);
-    res.status(500).json({ error: "Failed to save channel message" });
+    console.error("Fel vid sparande av meddelande:", err);
+    res.status(500).json({ error: "Kunde inte spara meddelande." });
   }
 });
 
-
-//Hämta meddelanden i kanal
+//Hämta meddelanden i en kanal
 router.get("/:channelId/messages", async (req, res) => {
-  const auth = req.headers.authorization;
-  if (!auth?.startsWith("Bearer "))
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Ingen token." });
+  }
 
-  const decoded = verifyToken(auth.split(" ")[1]);
-  if (!decoded)
+  const token = authHeader.split(" ")[1];
+  const decoded = verifyToken(token);
+  if (!decoded) {
     return res.status(403).json({ error: "Ogiltig token." });
+  }
 
   try {
     const result = await db.send(
@@ -95,9 +118,10 @@ router.get("/:channelId/messages", async (req, res) => {
         },
       })
     );
+
     res.json(result.Items || []);
   } catch (err) {
-    console.error("Fel vid hämtning:", err);
+    console.error("Fel vid hämtning av kanalmeddelanden:", err);
     res.status(500).json({ error: "Kunde inte hämta kanalmeddelanden." });
   }
 });
