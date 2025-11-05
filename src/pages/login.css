@@ -100,7 +100,7 @@ body.login-page {
 
 @media (max-width: 768px) {
   .login-container {
-    width: 70%;
+    width: 100%;
     padding: 30px;
   }
 

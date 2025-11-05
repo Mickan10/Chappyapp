@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from "uuid";
 const router = express.Router();
 
 //Hämta alla kanaler
+// Hämta alla kanaler
 router.get("/all", async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) {
@@ -22,7 +23,8 @@ router.get("/all", async (req, res) => {
   try {
     const isGuest = decoded.role === "guest";
 
-    //Gäst bara kanaler som inte är låsta
+    // Om gäst – visa bara öppna kanaler (isPrivate = false)
+    // Om inloggad användare – visa alla kanaler
     const params = isGuest
       ? {
           TableName: myTable,
@@ -33,8 +35,9 @@ router.get("/all", async (req, res) => {
             ":meta": "META",
             ":false": false,
           },
-          ProjectionExpression: "PK, #n",
-          ExpressionAttributeNames: { "#n": "name" },
+          // Hämtar alltid både namn och isPrivate
+          ProjectionExpression: "PK, SK, #nm, isPrivate",
+          ExpressionAttributeNames: { "#nm": "name" },
         }
       : {
           TableName: myTable,
@@ -43,19 +46,27 @@ router.get("/all", async (req, res) => {
             ":p": "CHANNEL_",
             ":meta": "META",
           },
-          ProjectionExpression: "PK, #n",
-          ExpressionAttributeNames: { "#n": "name" },
+          ProjectionExpression: "PK, SK, #nm, isPrivate",
+          ExpressionAttributeNames: { "#nm": "name" },
         };
 
     const result = await db.send(new ScanCommand(params));
-    res.json(result.Items || []);
+
+    console.log("🎯 Kanaler från DB:", result.Items);
+
+    // Sortera, så låsta kanaler inte hamnar först
+    const sortedChannels = (result.Items || []).sort((a, b) =>
+      (a.name || "").localeCompare(b.name || "")
+    );
+
+    res.json(sortedChannels);
   } catch (err) {
     console.error("Fel vid hämtning av kanaler:", err);
     res.status(500).json({ error: "Kunde inte hämta kanaler." });
   }
 });
 
-//Meddelanden i kanalerna
+//Skicka meddelande i kanal
 router.post("/messages", async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) {
@@ -74,9 +85,32 @@ router.post("/messages", async (req, res) => {
   }
 
   try {
+    //Om gäst – kontrollera att kanalen inte är låst
+    if (decoded.role === "guest") {
+
+      const checkChannel = await db.send(
+        new ScanCommand({
+          TableName: myTable,
+          FilterExpression: "PK = :pk AND SK = :meta",
+          ExpressionAttributeValues: {
+            ":pk": channelId,
+            ":meta": "META",
+          },
+        })
+      );
+
+      const channel = checkChannel.Items?.[0];
+      if (channel?.isPrivate) {
+        return res
+          .status(403)
+          .json({ error: "Denna kanal är låst för gäster." });
+      }
+    }
+
     const messageId = uuidv4();
 
     const messageItem = {
+
       PK: channelId,
       SK: `MESSAGE#${messageId}`,
       senderId: decoded.userId,
@@ -84,6 +118,7 @@ router.post("/messages", async (req, res) => {
         decoded.role === "guest" ? `Gäst – ${decoded.name}` : decoded.name,
       text,
       timestamp: new Date().toISOString(),
+
     };
 
     await db.send(new PutCommand({ TableName: myTable, Item: messageItem }));
@@ -94,7 +129,7 @@ router.post("/messages", async (req, res) => {
   }
 });
 
-//Hämta meddelanden i en kanal
+//Hämta meddelanden i kanal
 router.get("/:channelId/messages", async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) {

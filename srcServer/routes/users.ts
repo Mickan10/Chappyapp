@@ -51,15 +51,24 @@ router.post("/register", async (req, res) => {
 
 //Logga in
 router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
+  let { email, password } = req.body;
+
+  email = email?.trim().toLowerCase();
+  password = password?.trim();
+
   if (!email || !password)
     return res.status(400).json({ error: "Fyll i email och lösenord." });
+
+  // Kontrollera epostformat
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email))
+    return res.status(400).json({ error: "Ogiltig e-postadress." });
 
   try {
     const result = await db.send(
       new ScanCommand({
         TableName: myTable,
-        FilterExpression: "email = :email",
+        FilterExpression: "LOWER(email) = :email",
         ExpressionAttributeValues: { ":email": email },
       })
     );
@@ -74,6 +83,7 @@ router.post("/login", async (req, res) => {
       userId: user.PK,
       email: user.email,
       name: user.name,
+      role: "user",
     });
 
     res.json({ token, name: user.name, userId: user.PK });

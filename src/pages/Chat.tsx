@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import chappyLogo from "../assets/chappy.png";
 import type { User, Message, Channel } from "../types";
 import Channels from "./Channels";
 import reklamImage from "../assets/reklam.png";
@@ -149,7 +148,7 @@ export default function Chat() {
       {/* Topbar */}
       <header className="topbar">
         <div className="topbar-left">
-          <img src={chappyLogo} alt="logo" className="topbar-logo" />
+          <h1>Chappy</h1>
         </div>
         <div className="topbar-right">
           <button className="btn-user">{user}</button>
