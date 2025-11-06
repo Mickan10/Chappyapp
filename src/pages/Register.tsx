@@ -17,7 +17,7 @@ export default function Register() {
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
-    setMessage("Skapar konto...")
+    setMessage("Skapar konto")
 
     try {
       const res = await fetch("/api/users/register", {
@@ -33,7 +33,7 @@ export default function Register() {
         return
       }
 
-      setMessage("Konto skapat! Skickar dig till inloggning...")
+      setMessage("Konto skapat! Skickar dig till inloggningssidan")
       setTimeout(() => navigate("/"), 2000)
     } catch {
       setMessage("Något gick fel, försök igen.")
@@ -46,14 +46,14 @@ export default function Register() {
       <h2>Skapa konto</h2>
 
       <form className="register-form" onSubmit={handleRegister}>
-        <input type="text"placeholder="Namn"value={name} onChange={(e) => setName(e.target.value)} required/>
 
+        <input type="text" placeholder="Namn" value={name} onChange={(e) => setName(e.target.value)} required/>
         <input type="email" placeholder="E-post" value={email} onChange={(e) => setEmail(e.target.value)} required/>
-        
         <input type="password" placeholder="Lösenord" value={password} onChange={(e) => setPassword(e.target.value)} required/>
         
         <button type="submit">Registrera</button>
         <button onClick={() => navigate("/")}>Tillbaka till login</button>
+
       </form>
 
       {message && <p className="status-message">{message}</p>}

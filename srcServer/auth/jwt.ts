@@ -20,11 +20,13 @@ export function verifyToken(token: string): MyJwtPayload | null {
     //TODO  return as
     const decoded = jwt.verify(token, secret);
     if (typeof decoded === "string") return null;
+
     return decoded as MyJwtPayload;
   } catch {
     // Fångar upp gäst
     if (token.startsWith("guest-token:")) {
       const name = token.split(":")[1] || "Gäst";
+
       return {
         userId: `guest-${Date.now()}`,
         name,

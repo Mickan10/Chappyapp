@@ -1,5 +1,4 @@
 
-/*  */
 body {
   margin: 0;
   font-family: "Roboto Mono", monospace;
@@ -42,6 +41,11 @@ body {
   color: #47595a;
 }
 
+.topbar-right {
+  display: flex;
+  align-items: center;
+}
+
 .topbar-right button {
   background: none;
   border: none;
@@ -50,15 +54,20 @@ body {
   cursor: pointer;
 }
 
-.topbar-right .btn-user { 
-  background: linear-gradient(180deg, #797664, #615e4d);
+.topbar-right .user-name { 
+  background: #99957c;
   color: rgb(231, 228, 228);
   margin-right: 10px;
+  padding: 10px 32px;
+  border-radius: 6px;
   box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
+  cursor: default; 
+  user-select: none; 
+  display: inline-block; 
 }
 
-.topbar-right .btn-logout 
-{ background-color: #62615f !important;
+.topbar-right .btn-logout { 
+  background-color: #62615f !important;
   color: rgb(231, 228, 228);
   box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
 }
@@ -93,7 +102,7 @@ body {
   font-size: 1.4rem;
   margin: 10px;
   font-weight: 600;
-  color: #99957c;
+  color: #efeeeb;
 }
 
 /* kanaler/meddelanden */

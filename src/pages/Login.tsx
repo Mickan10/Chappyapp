@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import chappyLogo from "../assets/chappy.png"
 import "./login.css"
 
 export default function Login() {
@@ -14,8 +13,9 @@ export default function Login() {
     return () => document.body.classList.remove("login-page")
   }, [])
 
+  //hantera login
   async function handleLogin(e: React.FormEvent) {
-    e.preventDefault()
+    e.preventDefault() //inte ladda om sidan
     setError("")
 
     try {
@@ -44,23 +44,13 @@ export default function Login() {
 
   return (
     <div className="login-container">
-      <img src={chappyLogo} alt="Chappy logo" className="logo" />
+      <h1>CHAPPY</h1>
 
       <form className="login-form" onSubmit={handleLogin}>
-        <input
-          type="email"
-          placeholder="E-post"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Lösenord"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <input type="email" placeholder="E-post" value={email} onChange={(e) => setEmail(e.target.value)} required/>
+
+        <input type="password" placeholder="Lösenord" value={password} onChange={(e) => setPassword(e.target.value)} required/>
+
         <button type="submit">Logga in</button>
 
         <button type="button" onClick={() => navigate("/register")}>

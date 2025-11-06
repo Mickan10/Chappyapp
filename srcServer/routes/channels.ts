@@ -7,7 +7,6 @@ import { v4 as uuidv4 } from "uuid";
 const router = express.Router();
 
 //Hämta alla kanaler
-// Hämta alla kanaler
 router.get("/all", async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) {
@@ -23,8 +22,7 @@ router.get("/all", async (req, res) => {
   try {
     const isGuest = decoded.role === "guest";
 
-    // Om gäst – visa bara öppna kanaler (isPrivate = false)
-    // Om inloggad användare – visa alla kanaler
+    // Om inloggad användare – visa alla kanaler, gäst ser bara öppna kanaler.
     const params = isGuest
       ? {
           TableName: myTable,
@@ -35,7 +33,7 @@ router.get("/all", async (req, res) => {
             ":meta": "META",
             ":false": false,
           },
-          // Hämtar alltid både namn och isPrivate
+          // Hämta alltid både namn och isPrivate
           ProjectionExpression: "PK, SK, #nm, isPrivate",
           ExpressionAttributeNames: { "#nm": "name" },
         }
@@ -51,8 +49,6 @@ router.get("/all", async (req, res) => {
         };
 
     const result = await db.send(new ScanCommand(params));
-
-    console.log("🎯 Kanaler från DB:", result.Items);
 
     // Sortera, så låsta kanaler inte hamnar först
     const sortedChannels = (result.Items || []).sort((a, b) =>

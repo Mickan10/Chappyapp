@@ -58,8 +58,14 @@ router.post("/messages", async (req, res) => {
       timestamp: Date.now(),
     };
 
-    await db.send(new PutCommand({ TableName: myTable, Item: message }));
-    await db.send(new PutCommand({ TableName: myTable, Item: { ...message, PK: receiverId },}));
+    await db.send(new PutCommand({ 
+      TableName: myTable, 
+      Item: message }));
+
+    await db.send(new PutCommand({ 
+      TableName: myTable, 
+      Item: { ...message, 
+      PK: receiverId },}));
 
     res.json({ success: true });
   } catch (err) {

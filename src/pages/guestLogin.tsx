@@ -42,7 +42,7 @@ export default function GuestLogin() {
 
   return (
     <div className="login-container">
-      <h2>Gästinloggning</h2>
+      <h2>Logga in som gäst</h2>
       <div className="login-form">
 
         <input type="text" placeholder="Ditt namn" value={name} onChange={(e) => setName(e.target.value)}/>

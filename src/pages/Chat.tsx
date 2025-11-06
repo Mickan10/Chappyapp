@@ -10,18 +10,17 @@ import avatar4 from "../assets/avatar4.png";
 
 export default function Chat() {
   const navigate = useNavigate();
-
   const [user, setUser] = useState<string>("");
   const [userId, setUserId] = useState<string>("");
-  const [role, setRole] = useState<string>(""); //Se om det är gäst eller användare
+  const [role, setRole] = useState<string>("");
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState<string>("");
 
+  //slumpa fram bilder till inloggade
   const avatars = [avatar1, avatar2, avatar3, avatar4];
-
   function getAvatarForUser(userId: string) {
     const index =
       Math.abs(
@@ -30,7 +29,7 @@ export default function Chat() {
     return avatars[index];
   }
 
-  //Logga ut
+  //logga ut
   function handleLogout() {
     localStorage.removeItem("token");
     localStorage.removeItem("userName");
@@ -39,7 +38,7 @@ export default function Chat() {
     navigate("/");
   }
 
-  //Hämta inloggad användare
+  //logga in
   useEffect(() => {
     const token = localStorage.getItem("token");
     const name = localStorage.getItem("userName");
@@ -51,14 +50,12 @@ export default function Chat() {
     }
     setUser(name || "");
     setUserId(id || "");
-    setRole(role || "user"); 
+    setRole(role || "user");
   }, [navigate]);
 
-  //Hämta alla användare
   useEffect(() => {
-    if (role === "guest") return; //gäster ska inte kunna hämta användare
+    if (role === "guest") return;
     const token = localStorage.getItem("token");
-
     async function loadUsers() {
       const res = await fetch("/api/users/all", {
         headers: { Authorization: `Bearer ${token}` },
@@ -69,7 +66,6 @@ export default function Chat() {
     loadUsers();
   }, [role]);
 
-  // Hämta privata meddelanden
   useEffect(() => {
     if (!selectedUser) return;
     const token = localStorage.getItem("token");
@@ -87,7 +83,6 @@ export default function Chat() {
     })();
   }, [selectedUser, userId]);
 
-  // Hämta kanalmeddelanden
   useEffect(() => {
     if (!selectedChannel) return;
     const token = localStorage.getItem("token");
@@ -100,14 +95,12 @@ export default function Chat() {
     })();
   }, [selectedChannel]);
 
-  // Skicka meddelande
   async function sendMessage() {
     if (!text.trim()) return;
     const token = localStorage.getItem("token");
 
     if (selectedUser) {
-      //meddelanden mellan bara användare
-      await fetch("/api/chats/messages", {
+      const res = await fetch("/api/chats/messages", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -118,11 +111,20 @@ export default function Chat() {
           text,
         }),
       });
+
+      if (res.ok) {
+        const newMessage = {
+          senderId: userId,
+          receiverId: selectedUser.PK,
+          text,
+          timestamp: Date.now(),
+        };
+        setMessages((prev) => [...prev, newMessage]); //uppdatera meddelandet direkt
+      }
     }
 
     if (selectedChannel) {
-      // Kanal
-      await fetch("/api/channels/messages", {
+      const res = await fetch("/api/channels/messages", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -133,11 +135,16 @@ export default function Chat() {
           text,
         }),
       });
-      const res = await fetch(`/api/channels/${selectedChannel.PK}/messages`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data: Message[] = await res.json();
-      setMessages(data);
+
+      if (res.ok) {
+        const newMessage = {
+          senderId: userId,
+          senderName: user,
+          text,
+          timestamp: Date.now(),
+        };
+        setMessages((prev) => [...prev, newMessage]);
+      }
     }
 
     setText("");
@@ -145,13 +152,12 @@ export default function Chat() {
 
   return (
     <div className="chat-page">
-      {/* Topbar */}
       <header className="topbar">
         <div className="topbar-left">
-          <h1>Chappy</h1>
+          <h1>CHAPPY</h1>
         </div>
         <div className="topbar-right">
-          <button className="btn-user">{user}</button>
+          <span className="user-name">Välkommen {user}</span>
           <button className="btn-logout" onClick={handleLogout}>
             Logga ut
           </button>
@@ -159,9 +165,10 @@ export default function Chat() {
       </header>
 
       <div className="chat-layout">
-        {/* Sidebar */}
         <aside className="sidebar">
-          <Channels selectedChannel={selectedChannel} onSelectChannel={(channel) => {
+          <Channels
+            selectedChannel={selectedChannel}
+            onSelectChannel={(channel) => {
               setSelectedChannel(channel);
               setSelectedUser(null);
               setMessages([]);
@@ -169,14 +176,16 @@ export default function Chat() {
             }}
           />
 
-          {/*Göm användare för Gäster*/}
           {role !== "guest" && (
             <div className="sidebar-section">
               <h3>Användare</h3>
               <ul>
                 {users.length === 0 && <li>Inga användare ännu</li>}
                 {users.map((u) => (
-                  <li key={u.PK} className={selectedUser?.PK === u.PK ? "active" : ""} onClick={() => {
+                  <li
+                    key={u.PK}
+                    className={selectedUser?.PK === u.PK ? "active" : ""}
+                    onClick={() => {
                       setSelectedUser(u);
                       setSelectedChannel(null);
                       setMessages([]);
@@ -190,14 +199,17 @@ export default function Chat() {
           )}
         </aside>
 
-        {/* Chatten */}
         <main className="chat-window">
           <div className="chat-header">
             {selectedChannel && <h3># {selectedChannel.name}</h3>}
 
             {selectedUser && (
               <div className="chat-header-user">
-                <img src={getAvatarForUser(selectedUser.PK)} alt="Avatar" className="header-avatar"/>
+                <img
+                  src={getAvatarForUser(selectedUser.PK)}
+                  alt="Avatar"
+                  className="header-avatar"
+                />
                 <h3>{selectedUser.name}</h3>
               </div>
             )}
@@ -209,26 +221,24 @@ export default function Chat() {
 
           <div className="chat-messages">
             {messages.map((m, i) => (
-              
-              <div key={i} className={`message-group ${
-                 m.senderId === userId ? "sent" : "received"}`}>
-                
+              <div
+                key={i}
+                className={`message-group ${
+                  m.senderId === userId ? "sent" : "received"
+                }`}
+              >
                 <div className="sender-info">
                   <em className="sender-name">
-                    {m.senderId === userId
-                      ? user
-                      : m.senderName || "Okänd"}
+                    {m.senderId === userId ? user : m.senderName || "Okänd"}
                   </em>
-                  
                   <span className="message-time">
-                    {" "}-{" "}
+                    {" - "}
                     {new Date(m.timestamp).toLocaleTimeString("sv-SE", {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
                   </span>
                 </div>
-
                 <div className="message-bubble">{m.text}</div>
               </div>
             ))}
@@ -236,16 +246,23 @@ export default function Chat() {
 
           {(selectedUser || selectedChannel) && (
             <div className="chat-input">
-              <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Aa..."/>
+              <input
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="Aa..."
+              />
               <button onClick={sendMessage}>Skicka</button>
             </div>
           )}
         </main>
 
-        {/* Reklam */}
         <div className="side-panel">
           <p>Annons:</p>
-          <img src={reklamImage} alt="Reklam: Chappy Premium" className="ad-image"/>
+          <img
+            src={reklamImage}
+            alt="Reklam: Chappy Premium"
+            className="ad-image"
+          />
         </div>
       </div>
     </div>

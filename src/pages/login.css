@@ -29,10 +29,16 @@ body.login-page {
   color: rgb(21, 21, 21);
 }
 
-.logo {
-  width: 120px;
-  height: auto;
+.login-container h1 {
+  font-size: 2.8rem;
   margin-bottom: 20px;
+  color: #212a2a;
+}
+
+.login-container h2 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  color: #b5baba;
 }
 
 .login-form {

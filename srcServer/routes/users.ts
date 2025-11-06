@@ -9,7 +9,9 @@ const router = express.Router();
 
 //Registrera användare
 router.post("/register", async (req, res) => {
+
   const { email, name, password } = req.body;
+
   if (!email || !name || !password)
     return res.status(400).json({ error: "Fyll i alla fält." });
 
@@ -45,7 +47,7 @@ router.post("/register", async (req, res) => {
     res.json({ message: "Användare skapad!" });
   } catch (err) {
     console.error("Register error:", err);
-    res.status(500).json({ error: "Serverfel vid registrering." });
+    res.status(500).json({ error: "Serverfel." });
   }
 });
 
@@ -59,7 +61,7 @@ router.post("/login", async (req, res) => {
   if (!email || !password)
     return res.status(400).json({ error: "Fyll i email och lösenord." });
 
-  // Kontrollera epostformat
+  // Kontrollera epost
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email))
     return res.status(400).json({ error: "Ogiltig e-postadress." });
@@ -68,7 +70,7 @@ router.post("/login", async (req, res) => {
     const result = await db.send(
       new ScanCommand({
         TableName: myTable,
-        FilterExpression: "LOWER(email) = :email",
+        FilterExpression: "email = :email",
         ExpressionAttributeValues: { ":email": email },
       })
     );

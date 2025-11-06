@@ -31,8 +31,7 @@ export default function Channels({ selectedChannel, onSelectChannel }: ChannelsP
           <li
             key={c.PK}
             className={selectedChannel?.PK === c.PK ? "active" : ""}
-            onClick={() => onSelectChannel(c)}
-          >
+            onClick={() => onSelectChannel(c)}>
             #{c.name}
           </li>
         ))}
