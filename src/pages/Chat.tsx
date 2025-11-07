@@ -19,7 +19,6 @@ export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState<string>("");
 
-  //slumpa fram bilder till inloggade
   const avatars = [avatar1, avatar2, avatar3, avatar4];
   function getAvatarForUser(userId: string) {
     const index =
@@ -29,7 +28,6 @@ export default function Chat() {
     return avatars[index];
   }
 
-  //logga ut
   function handleLogout() {
     localStorage.removeItem("token");
     localStorage.removeItem("userName");
@@ -38,7 +36,6 @@ export default function Chat() {
     navigate("/");
   }
 
-  //logga in
   useEffect(() => {
     const token = localStorage.getItem("token");
     const name = localStorage.getItem("userName");
@@ -118,7 +115,7 @@ export default function Chat() {
           text,
           timestamp: Date.now(),
         };
-        setMessages((prev) => [...prev, newMessage]); //uppdatera meddelandet direkt
+        setMessages((prev) => [...prev, newMessage]);
       }
     }
 
@@ -150,7 +147,6 @@ export default function Chat() {
   }
 
   return (
-    
     <div className="chat-page">
       <header className="topbar">
         <div className="topbar-left">
@@ -169,6 +165,7 @@ export default function Chat() {
           <Channels
             selectedChannel={selectedChannel}
             onSelectChannel={(channel) => {
+              if (role === "guest" && channel.isPrivate) return channel;
               setSelectedChannel(channel);
               setSelectedUser(null);
               setMessages([]);
@@ -176,40 +173,38 @@ export default function Chat() {
             }}
           />
 
-        <div className="sidebar-section">
-          <h3>Användare</h3>
-          <ul>
-            {users.length === 0 && <li>Inga användare ännu</li>}
-            {users.map((u) => {
-              const isGuest = role === "guest";
-              const isDisabled = isGuest; // gäster kan inte klicka upp
-
-              return (
-                <li
-                  key={u.PK}
-                  className={`${selectedUser?.PK === u.PK ? "active" : ""} ${
-                    isDisabled ? "locked-user" : ""
-                  }`}
-                  onClick={() => {
-                    if (!isDisabled) {
-                      setSelectedUser(u);
-                      setSelectedChannel(null);
-                      setMessages([]);
-                    }
-                  }}
-                >
-                  {u.name}
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+          <div className="sidebar-section">
+            <h3>Användare</h3>
+            <ul>
+              {users.length === 0 && <li>Inga användare ännu</li>}
+              {users.map((u) => {
+                const isGuest = role === "guest";
+                const isDisabled = isGuest;
+                return (
+                  <li
+                    key={u.PK}
+                    className={`${selectedUser?.PK === u.PK ? "active" : ""} ${
+                      isDisabled ? "locked-user" : ""
+                    }`}
+                    onClick={() => {
+                      if (!isDisabled) {
+                        setSelectedUser(u);
+                        setSelectedChannel(null);
+                        setMessages([]);
+                      }
+                    }}
+                  >
+                    {u.name}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         </aside>
 
         <main className="chat-window">
           <div className="chat-header">
             {selectedChannel && <h3># {selectedChannel.name}</h3>}
-
             {selectedUser && (
               <div className="chat-header-user">
                 <img
@@ -220,7 +215,6 @@ export default function Chat() {
                 <h3>{selectedUser.name}</h3>
               </div>
             )}
-
             {!selectedUser && !selectedChannel && (
               <h3>Välj kanal eller användare</h3>
             )}
