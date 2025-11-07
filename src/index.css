@@ -56,9 +56,9 @@ body {
 
 .topbar-right .user-name { 
   background: #99957c;
-  color: rgb(231, 228, 228);
+  color: rgb(23, 22, 22);
   margin-right: 10px;
-  padding: 10px 32px;
+  padding: 6px 30px;
   border-radius: 6px;
   box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
   cursor: default; 
@@ -186,8 +186,8 @@ body {
   word-wrap: break-word;
   background-color: #d9d9d9;
   color: #0b0b0b;
-  line-height: 1.4;
-  font-size: 18px;
+  line-height: 1.1;
+  font-size: 17px;
   font-weight: 400;
   box-shadow: 0 13px 15px rgba(0, 0, 0, 0.2);
   max-width: 100%;
@@ -243,23 +243,26 @@ body {
 }
 
 .chat-input button {
-  padding: 10px 25px;
+  padding: 10px 35px;
   border: none;
   border-radius: 6px;
-  background: linear-gradient(180deg, #797664, #615e4d);
-  color: white;
+  background: #99957c;
+  color: rgb(0, 0, 0);
   cursor: pointer;
+  font-weight: 550;
 }
 
 /* höger reklamruta */
 .side-panel {
-  width: 250px;
+  width: 280px;
+  height: 100%;
   background: linear-gradient(180deg, #3e4b4c, #2f393a);
-  padding: 15px;
+  padding: 0px;
   display: flex;
   flex-direction: column;
   align-items: center;
   color: #e0e0e0;
+  overflow: hidden;
 }
 
 .side-panel img {
@@ -268,6 +271,14 @@ body {
   border-radius: 10px;
   margin-top: 20px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Gäst */
+.locked-channel {
+  opacity: 0.6;
+  color: gray;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 @media (max-width: 1024px) {

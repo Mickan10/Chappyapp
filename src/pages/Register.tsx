@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import chappyLogo from "../assets/chappy.png"
 import "./register.css"
 
 export default function Register() {
@@ -42,7 +41,6 @@ export default function Register() {
 
   return (
     <div className="register-container">
-      <img src={chappyLogo} alt="Chappy logo" className="logo" />
       <h2>Skapa konto</h2>
 
       <form className="register-form" onSubmit={handleRegister}>

@@ -10,10 +10,14 @@ const router = express.Router();
 //Registrera användare
 router.post("/register", async (req, res) => {
 
-  const { email, name, password } = req.body;
+  let { email, name, password } = req.body;
 
   if (!email || !name || !password)
     return res.status(400).json({ error: "Fyll i alla fält." });
+
+  email = email.trim().toLowerCase(); 
+  name = name.trim();
+  password = password.trim();
 
   try {
     //Kolla om email redan finns

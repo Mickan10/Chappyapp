@@ -20,42 +20,35 @@ router.get("/all", async (req, res) => {
   }
 
   try {
-    const isGuest = decoded.role === "guest";
-
-    // Om inloggad användare – visa alla kanaler, gäst ser bara öppna kanaler.
-    const params = isGuest
-      ? {
-          TableName: myTable,
-          FilterExpression:
-            "begins_with(PK, :p) AND SK = :meta AND (attribute_not_exists(isPrivate) OR isPrivate = :false)",
-          ExpressionAttributeValues: {
-            ":p": "CHANNEL_",
-            ":meta": "META",
-            ":false": false,
-          },
-          // Hämta alltid både namn och isPrivate
-          ProjectionExpression: "PK, SK, #nm, isPrivate",
-          ExpressionAttributeNames: { "#nm": "name" },
-        }
-      : {
-          TableName: myTable,
-          FilterExpression: "begins_with(PK, :p) AND SK = :meta",
-          ExpressionAttributeValues: {
-            ":p": "CHANNEL_",
-            ":meta": "META",
-          },
-          ProjectionExpression: "PK, SK, #nm, isPrivate",
-          ExpressionAttributeNames: { "#nm": "name" },
-        };
+    const params = {
+      TableName: myTable,
+      FilterExpression: "begins_with(PK, :p) AND SK = :meta",
+      ExpressionAttributeValues: {
+        ":p": "CHANNEL_",
+        ":meta": "META",
+      },
+      ProjectionExpression: "PK, SK, #nm, isPrivate",
+      ExpressionAttributeNames: { "#nm": "name" },
+    };
 
     const result = await db.send(new ScanCommand(params));
+    const allChannels = result.Items || [];
 
-    // Sortera, så låsta kanaler inte hamnar först
-    const sortedChannels = (result.Items || []).sort((a, b) =>
+    // Sortera 
+    const sortedChannels = allChannels.sort((a, b) =>
       (a.name || "").localeCompare(b.name || "")
     );
 
-    res.json(sortedChannels);
+    // Om gäst – returnera alla, men markera låsta
+    const isGuest = decoded.role === "guest";
+    const formatted = isGuest
+      ? sortedChannels.map((ch) => ({
+          ...ch,
+          isPrivate: ch.isPrivate === true,
+        }))
+      : sortedChannels;
+
+    res.json(formatted);
   } catch (err) {
     console.error("Fel vid hämtning av kanaler:", err);
     res.status(500).json({ error: "Kunde inte hämta kanaler." });

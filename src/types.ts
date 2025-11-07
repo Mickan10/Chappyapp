@@ -1,6 +1,7 @@
 export interface User {
   PK: string;
   name: string;
+  role: "user" | "guest";
 }
 
 export interface Message {
@@ -15,4 +16,5 @@ export interface Channel {
   PK: string;
   SK?: string;
   name: string;
+  isPrivate?: boolean;
 }

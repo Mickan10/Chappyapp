@@ -47,12 +47,14 @@ router.post("/messages", async (req, res) => {
 
   try {
     const senderId = decoded.userId;
+    const senderName = decoded.name;
     const messageId = uuidv4();
 
     const message = {
       PK: senderId,
       SK: `MESSAGE#${messageId}`,
       senderId,
+      senderName,
       receiverId,
       text,
       timestamp: Date.now(),
