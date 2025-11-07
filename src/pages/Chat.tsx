@@ -54,7 +54,6 @@ export default function Chat() {
   }, [navigate]);
 
   useEffect(() => {
-    if (role === "guest") return;
     const token = localStorage.getItem("token");
     async function loadUsers() {
       const res = await fetch("/api/users/all", {
@@ -151,6 +150,7 @@ export default function Chat() {
   }
 
   return (
+    
     <div className="chat-page">
       <header className="topbar">
         <div className="topbar-left">
@@ -176,27 +176,34 @@ export default function Chat() {
             }}
           />
 
-          {role !== "guest" && (
-            <div className="sidebar-section">
-              <h3>Användare</h3>
-              <ul>
-                {users.length === 0 && <li>Inga användare ännu</li>}
-                {users.map((u) => (
-                  <li
-                    key={u.PK}
-                    className={selectedUser?.PK === u.PK ? "active" : ""}
-                    onClick={() => {
+        <div className="sidebar-section">
+          <h3>Användare</h3>
+          <ul>
+            {users.length === 0 && <li>Inga användare ännu</li>}
+            {users.map((u) => {
+              const isGuest = role === "guest";
+              const isDisabled = isGuest; // gäster kan inte klicka upp
+
+              return (
+                <li
+                  key={u.PK}
+                  className={`${selectedUser?.PK === u.PK ? "active" : ""} ${
+                    isDisabled ? "locked-user" : ""
+                  }`}
+                  onClick={() => {
+                    if (!isDisabled) {
                       setSelectedUser(u);
                       setSelectedChannel(null);
                       setMessages([]);
-                    }}
-                  >
-                    {u.name}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+                    }
+                  }}
+                >
+                  {u.name}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
         </aside>
 
         <main className="chat-window">

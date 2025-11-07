@@ -9,32 +9,21 @@ export interface MyJwtPayload extends JwtPayload {
   role?: string;
 }
 
+// Skapa token
 export function createToken(payload: MyJwtPayload): string {
   return jwt.sign(payload, secret, { expiresIn: "1h" });
 }
 
+// Verifiera token
 export function verifyToken(token: string): MyJwtPayload | null {
   if (!token) return null;
 
   try {
-    //TODO  return as
     const decoded = jwt.verify(token, secret);
     if (typeof decoded === "string") return null;
-
     return decoded as MyJwtPayload;
-  } catch {
-    // Fångar upp gäst
-    if (token.startsWith("guest-token:")) {
-      const name = token.split(":")[1] || "Gäst";
-
-      return {
-        userId: `guest-${Date.now()}`,
-        name,
-        role: "guest",
-        iat: Math.floor(Date.now() / 1000),
-      };
-    }
-
+  } catch (err) {
+    console.error("JWT verify error:", err);
     return null;
   }
 }

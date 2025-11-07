@@ -11,12 +11,14 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  overflow: hidden;
 }
 
 .chat-layout {
   display: flex;
   flex: 1;
   height: 100%;
+  overflow: hidden;
 }
 
 /* header */
@@ -274,7 +276,7 @@ body {
 }
 
 /* Gäst */
-.locked-channel {
+.locked-channel, .locked-user {
   opacity: 0.6;
   color: gray;
   cursor: not-allowed;

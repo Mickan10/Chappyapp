@@ -108,12 +108,19 @@ router.post("/guest", async (req, res) => {
 
   const guestName = name.trim();
   const guestId = `guest-${Date.now()}`;
-  const token = `guest-token:${guestName}`;
+  
+   const token = createToken({
+    userId: guestId,
+    name: guestName,
+    email: "guest@chappy",
+    role: "guest",
+  });
 
   return res.json({
     token,
     name: guestName,
     userId: guestId,
+    role: "guest",
   });
 });
 
@@ -126,11 +133,6 @@ router.get("/all", async (req, res) => {
   const token = authHeader.split(" ")[1];
   const decoded = verifyToken(token);
   if (!decoded) return res.status(403).json({ error: "Ogiltig token." });
-
-  //Gäst hoppas över
-  if (decoded.role === "guest") {
-    return res.json([]); 
-  }
 
   //Inloggade användare hämtas från databasen
   try {
