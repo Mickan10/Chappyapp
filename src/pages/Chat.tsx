@@ -216,7 +216,7 @@ export default function Chat() {
               </div>
             )}
             {!selectedUser && !selectedChannel && (
-              <h3>Välj kanal eller användare</h3>
+              <h3>Välj kanal eller användare för att chatta</h3>
             )}
           </div>
 
@@ -225,7 +225,7 @@ export default function Chat() {
               <div
                 key={i}
                 className={`message-group ${
-                  m.senderId === userId ? "sent" : "received"
+                m.senderId === userId ? "sent" : "received"
                 }`}
               >
                 <div className="sender-info">
@@ -246,24 +246,18 @@ export default function Chat() {
           </div>
 
           {(selectedUser || selectedChannel) && (
-            <div className="chat-input">
-              <input
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder="Aa..."
-              />
-              <button onClick={sendMessage}>Skicka</button>
-            </div>
+
+          <div className="chat-input">
+           <textarea placeholder="Skriv ett meddelande..." value={text} onChange={(e) => setText(e.target.value)} rows={2}></textarea>
+
+            <button onClick={sendMessage}>Skicka</button>
+          </div>
+
           )}
         </main>
 
         <div className="side-panel">
-          <p>Annons:</p>
-          <img
-            src={reklamImage}
-            alt="Reklam: Chappy Premium"
-            className="ad-image"
-          />
+          <img src={reklamImage} alt="Reklam: Chappy Premium" className="ad-image"/>
         </div>
       </div>
     </div>

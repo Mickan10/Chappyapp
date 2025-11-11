@@ -182,6 +182,8 @@ cd chappy
 
 npm install
 
+npm run restart-server
+
 
 ## Resources
 

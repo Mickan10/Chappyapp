@@ -41,6 +41,7 @@ body {
   font-size: 2.8rem;
   margin: 0;
   color: #47595a;
+  border-bottom: 10px solid #47595a;
 }
 
 .topbar-right {
@@ -101,15 +102,15 @@ body {
 }
 
 .chat-header h3 {
-  font-size: 1.4rem;
-  margin: 10px;
+  font-size: 1.2rem;
+  margin: 12px;
   font-weight: 600;
   color: #efeeeb;
 }
 
 /* kanaler/meddelanden */
 .sidebar {
-  width: 200px;
+  width: 270px;
   background: linear-gradient(180deg, #415153, #435051, #282d2e);
   padding: 15px;
   display: flex;
@@ -182,14 +183,14 @@ body {
 }
 
 .message-bubble {
-  padding: 7px 26px;
+  padding: 7px 20px;
   border-radius: 14px;
-  margin: 6px;
+  margin: 3px;
   word-wrap: break-word;
   background-color: #d9d9d9;
   color: #0b0b0b;
   line-height: 1.1;
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 400;
   box-shadow: 0 13px 15px rgba(0, 0, 0, 0.2);
   max-width: 100%;
@@ -210,7 +211,7 @@ body {
 /* meddelanden (höger) */
 .sent {
   align-self: flex-end;
-  text-align: right;
+  text-align: left;
 }
 
 .sent .sender-name {
@@ -226,26 +227,32 @@ body {
 .chat-input {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end; 
   gap: 8px;
-  max-width: 1000px;  
+  max-width: 1000px;
   width: 100%;
-  margin: 0 auto;     
+  margin: 0 auto;
   padding-top: 10px;
-  border-top: 1px solid #dcd8d8;
+  border-top: 1px solid #99957c;
 }
 
-.chat-input input {
+.chat-input textarea {
   flex: 1;
-  padding: 10px;
-  border: none;
+  padding: 3px;
   border-radius: 6px;
   background-color: #f3f1f1;
   color: rgb(0, 0, 0);
+  resize: none; 
+  overflow-y: auto; 
+  max-height: 120px; 
+  min-height: 16px; 
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1;
 }
 
 .chat-input button {
-  padding: 10px 35px;
+  padding: 11px 40px;
   border: none;
   border-radius: 6px;
   background: #99957c;
@@ -256,7 +263,7 @@ body {
 
 /* höger reklamruta */
 .side-panel {
-  width: 280px;
+  width: 300px;
   height: 100%;
   background: linear-gradient(180deg, #3e4b4c, #2f393a);
   padding: 0px;
@@ -269,9 +276,8 @@ body {
 
 .side-panel img {
   width: 100%;
-  height: 90%;
-  border-radius: 10px;
-  margin-top: 20px;
+  height: 100%;
+  margin-top: 0px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
 }
 
