@@ -4,6 +4,7 @@ import { verifyToken } from "../auth/jwt.js";
 import { ScanCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { v4 as uuidv4 } from "uuid";
 const router = express.Router();
+//Hämta alla kanaler
 router.get("/all", async (req, res) => {
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith("Bearer ")) {
@@ -27,20 +28,11 @@ router.get("/all", async (req, res) => {
         };
         const result = await db.send(new ScanCommand(params));
         const allChannels = (result.Items || []);
+        //sortera kanalerna
         const sortedChannels = allChannels.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-        let formatted;
-        if (decoded.role === "guest") {
-            formatted = sortedChannels.map((ch) => ({
-                ...ch,
-                isPrivate: ch.isPrivate === true,
-            }));
-        }
-        else {
-            formatted = sortedChannels.map((ch) => ({
-                ...ch,
-                isPrivate: false,
-            }));
-        }
+        const formatted = decoded.role === "guest"
+            ? sortedChannels.map((ch) => ({ ...ch, isPrivate: ch.isPrivate === true }))
+            : sortedChannels.map((ch) => ({ ...ch, isPrivate: false }));
         return res.status(200).json(formatted);
     }
     catch (err) {

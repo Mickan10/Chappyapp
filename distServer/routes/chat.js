@@ -37,8 +37,8 @@ router.post("/messages", async (req, res) => {
     }
     const token = auth.split(" ")[1];
     const decoded = verifyToken(token);
-    if (!decoded) {
-        return res.status(403).json({ error: "Ogiltig token." });
+    if (!decoded || !decoded.userId || !decoded.name) {
+        return res.status(403).json({ error: "Ogiltig token-data." });
     }
     const { receiverId, text } = req.body;
     if (!receiverId || !text) {

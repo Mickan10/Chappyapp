@@ -36,6 +36,12 @@ body.login-page {
   border-bottom: 20px solid #212a2a;
 }
 
+.login-container h2 {
+  font-size: 2rem;
+  margin-bottom: 30px;
+  color: #ffffff;
+}
+
 .login-form {
   width: 100%;
   display: flex;
