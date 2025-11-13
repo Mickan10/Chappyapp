@@ -18,6 +18,11 @@ export default function Login() {
     e.preventDefault() //inte ladda om sidan
     setError("")
 
+    if (!email.trim() || !password.trim()) {
+    setError("Fyll i både e-post och lösenord.")
+    return
+  }
+
     try {
       const res = await fetch("/api/users/login", {
         method: "POST",
@@ -48,9 +53,9 @@ export default function Login() {
       <h1>CHAPPY</h1>
 
       <form className="login-form" onSubmit={handleLogin}>
-        <input type="email" placeholder="E-post" value={email} onChange={(e) => setEmail(e.target.value)} required/>
+        <input type="email" placeholder="E-post" value={email} onChange={(e) => setEmail(e.target.value)}/>
 
-        <input type="password" placeholder="Lösenord" value={password} onChange={(e) => setPassword(e.target.value)} required/>
+        <input type="password" placeholder="Lösenord" value={password} onChange={(e) => setPassword(e.target.value)}/>
 
         <button type="submit">Logga in</button>
 

@@ -156,8 +156,7 @@ router.get("/all", async (req: Request, res: Response) => {
     const result = await db.send(
       new ScanCommand({
         TableName: myTable,
-        FilterExpression:
-          "begins_with(PK, :prefix) AND SK = :meta AND PK <> :myId",
+        FilterExpression: "begins_with(PK, :prefix) AND SK = :meta AND PK <> :myId",
         ExpressionAttributeValues: {
           ":prefix": "USER#",
           ":meta": "META",

@@ -7,6 +7,7 @@ import { Channel, Message, DecodedToken } from "../types.js";
 
 const router = express.Router();
 
+//Hämta alla kanaler
 router.get("/all", async (req: Request, res: Response) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) {
@@ -34,23 +35,14 @@ router.get("/all", async (req: Request, res: Response) => {
     const result = await db.send(new ScanCommand(params));
     const allChannels = (result.Items || []) as Channel[];
 
+    //sortera kanalerna
     const sortedChannels = allChannels.sort((a, b) =>
       (a.name || "").localeCompare(b.name || "")
     );
 
-    let formatted: Channel[];
-
-    if (decoded.role === "guest") {
-      formatted = sortedChannels.map((ch) => ({
-        ...ch,
-        isPrivate: ch.isPrivate === true,
-      }));
-    } else {
-      formatted = sortedChannels.map((ch) => ({
-        ...ch,
-        isPrivate: false,
-      }));
-    }
+    const formatted = decoded.role === "guest"
+  ? sortedChannels.map((ch) => ({ ...ch, isPrivate: ch.isPrivate === true }))
+  : sortedChannels.map((ch) => ({ ...ch, isPrivate: false }));
 
     return res.status(200).json(formatted);
   } catch (err) {

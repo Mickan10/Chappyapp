@@ -16,8 +16,8 @@ export interface Message {
 }
 
 export interface Channel {
-  PK: string;               
-  SK: string;              
+  PK: string;
+  SK: string;
   name: string;
   isPrivate?: boolean;
 }
